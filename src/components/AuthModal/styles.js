@@ -1,0 +1,76 @@
+export const authStyles = {
+  modalWrapper: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: { xs: "90%", sm: "500px", md: "550px" },
+    background: "#1c1c29",
+    borderRadius: "20px",
+    padding: "40px 30px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    boxShadow: "0 0 60px rgba(255, 105, 180, 0.3)",
+    animation: "fadeInUp 0.6s ease-out",
+    position: "relative",
+  },
+  closeBtn: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    color: "#ff85ff",
+    "&:hover": { color: "#ff5cd1", transform: "scale(1.1)" },
+  },
+  title: {
+    fontSize: "1.5rem",
+    fontWeight: 800,
+    color: "#ff85ff",
+    marginBottom: "25px",
+    textAlign: "center",
+  },
+  form: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+  },
+  input: {
+    background: "#2a2a3d",
+    borderRadius: "12px",
+    input: { color: "#fff" },
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#444",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#ff85ff",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#ff85ff",
+    },
+  },
+  submitBtn: {
+    background: "linear-gradient(135deg, #ff85ff, #7a5aff)",
+    color: "#fff",
+    fontWeight: 700,
+    padding: "12px 0",
+    borderRadius: "12px",
+    fontSize: "1rem",
+    transition: "0.3s",
+    "&:hover": {
+      transform: "translateY(-3px)",
+      boxShadow: "0 8px 25px rgba(255, 133, 255, 0.4)",
+    },
+  },
+  footerText: {
+    marginTop: "20px",
+    fontSize: "0.9rem",
+    color: "#ccc",
+    textAlign: "center",
+  },
+  linkText: {
+    cursor: "pointer",
+    color: "#ff85ff",
+    fontWeight: 600,
+  },
+};
