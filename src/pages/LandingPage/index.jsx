@@ -38,7 +38,6 @@ const LandingPage = () => {
     </div>
   );
 };
-
 const styles = {
   container: {
     width: "100%",
@@ -47,22 +46,27 @@ const styles = {
     overflow: "hidden",
   },
 
+  // HERO SECTION – First section, no spacing above
   heroWrapper: {
-    marginTop: "80px", // leave space for fixed header if needed
-    background: "linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #8b5cf6 100%)",
-    padding: "100px 20px",
-    position: "relative",
-    overflow: "hidden",
+    width: "100%",
+    padding: 0,
+    marginTop: 0,
   },
 
+  // OTHER SECTIONS — spacing between each section
   section: {
-    padding: "20px",
+    width: "100%",
+    padding: 0,
+    marginTop: "40px", // spacing between sections
   },
 
   ctaWrapper: {
-    padding: "20px",
-    margin: "50px 0",
+    width: "100%",
+    padding: 0,
+    marginTop: "40px", // spacing before CTA
   },
 };
+
+
 
 export default LandingPage;

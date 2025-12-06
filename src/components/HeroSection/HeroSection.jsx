@@ -1,66 +1,29 @@
 import React from "react";
-import { styles, keyframes } from "./styles";
+import { styles } from "./styles";
 
 const HeroSection = () => {
-  const circleText = [
-    "Invest Smarter",
-    "Grow Faster",
-    "Secure Transactions",
-    "Real-time Insights",
-    "Powerful Analytics",
-    "Build Wealth",
-  ];
-
-  const renderCircleText = () => {
-    const angleStep = 360 / circleText.length;
-    return circleText.map((text, i) => {
-      const angle = i * angleStep;
-      const rad = (angle * Math.PI) / 180;
-      const radius = 120; // half of circleWrapper
-      const x = radius * Math.cos(rad);
-      const y = radius * Math.sin(rad);
-      return (
-        <span
-          key={i}
-          style={{
-            position: "absolute",
-            transform: `translate(${x}px, ${y}px) rotate(${angle}deg)`,
-            color: "#1e293b", 
-          }}
-        >
-          {text}
-        </span>
-      );
-    });
-  };
-
   return (
     <div style={styles.container}>
-      <style>{keyframes}</style>
+      {/* Floating Blobs */}
+      <div style={styles.blob1}></div>
+      <div style={styles.blob2}></div>
 
-      <div style={styles.content}>
-        {/* LEFT TEXT */}
-        <div style={styles.leftSection}>
-          <h1 style={styles.title}>
-            Invest Smarter, <span style={styles.gradient}>Grow Faster</span>
-          </h1>
+      <div style={styles.centerContent}>
+        <h1 style={styles.bigTitle}>
+          Smarter <span style={styles.gradient}>Investing</span> Starts Here
+        </h1>
 
-          <p style={styles.subtitle}>
-            Build wealth with confidence. Access real-time insights, secure
-            transactions, and powerful analytics—all in one platform.
-          </p>
+        <p style={styles.subtitleCenter}>
+          Maximize your profits with AI-powered insights, seamless transactions,
+          and real-time analytics built for modern investors.
+        </p>
 
-          <div style={styles.ctaWrap}>
-            <button style={styles.primaryBtn}>Start Investing</button>
-            <button style={styles.secondaryBtn}>Learn More</button>
-          </div>
-        </div>
-
-        {/* RIGHT CIRCLE TEXT DESIGN */}
-        <div style={styles.rightSection}>
-          <div style={styles.circleWrapper}>{renderCircleText()}</div>
+        <div style={styles.ctaWrapCenter}>
+          <button style={styles.primaryBtn}>Get Started</button>
+          <button style={styles.secondaryBtn}>Explore Plans</button>
         </div>
       </div>
+
     </div>
   );
 };
