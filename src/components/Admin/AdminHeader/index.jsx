@@ -1,104 +1,122 @@
+// src/components/Admin/AdminHeader.jsx
 import React from "react";
-import { Box, Typography, IconButton, Avatar, Chip } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import { useTheme } from "@mui/material/styles";
+import {
+    AppBar,
+    Toolbar,
+    IconButton,
+    Typography,
+    Box,
+    Avatar,
+    Menu,
+    MenuItem,
+    TextField,
+    InputAdornment,
+    Badge,
+} from "@mui/material";
+import { Menu as MenuIcon } from "lucide-react";
+import { Search,  Settings } from "@mui/icons-material";
 
-const AdminHeader = () => {
-    const theme = useTheme();
-    const isDark = theme.palette.mode === "dark";
+const AdminHeader = ({ toggleMobile }) => {
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const openMenu = (e) => setAnchorEl(e.currentTarget);
+    const closeMenu = () => setAnchorEl(null);
 
     return (
-        <Box sx={styles(theme, isDark).container}>
-            {/* Left Side - Title */}
-            <Box sx={styles(theme, isDark).left}>
-                <Typography sx={styles(theme, isDark).title}>Dashboard</Typography>
-                <Chip
-                    label="Admin"
-                    size="small"
-                    sx={styles(theme, isDark).badge}
-                />
-            </Box>
+        <AppBar
+            position="fixed"
+            sx={{
+                background: "#102542",
+                boxShadow: "0px 4px 20px rgba(0,0,0,0.25)",
+                zIndex: 1200,
+            }}
+        >
+            <Toolbar
+                sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    py: 1,
+                }}
+            >
+                {/* Left Section */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    {/* Mobile Sidebar Toggle */}
+                    <IconButton sx={{ display: { md: "none" } }} onClick={() => toggleMobile(true)}>
+                        <MenuIcon color="white" size={26} />
+                    </IconButton>
 
-            {/* Right Side - Actions */}
-            <Box sx={styles(theme, isDark).right}>
-                <IconButton sx={styles(theme, isDark).iconBtn}>
-                    <NotificationsIcon />
-                </IconButton>
-                <Avatar sx={styles(theme, isDark).avatar}>A</Avatar>
-            </Box>
-        </Box>
+                    <Typography
+                        sx={{
+                            fontSize: "20px",
+                            fontWeight: 700,
+                            color: "#4f9bff",
+                            letterSpacing: "0.6px",
+                        }}
+                    >
+                        RBC Admin Panel
+                    </Typography>
+                </Box>
+
+                {/* Search Bar */}
+                <Box
+                    sx={{
+                        display: { xs: "none", sm: "block" },
+                        flex: 1,
+                        mx: 3,
+                    }}
+                >
+                    <TextField
+                        fullWidth
+                        placeholder="Search anything..."
+                        InputProps={{
+                            sx: {
+                                background: "rgba(255,255,255,0.1)",
+                                borderRadius: "12px",
+                                color: "#fff",
+                            },
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search sx={{ color: "#90a4ae" }} />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Box>
+
+                {/* Right Section */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    {/* Notifications */}
+                    <Badge color="error" variant="dot">
+                        {/* <IconButton>
+                            <Bell sx={{ color: "#fff" }} />
+                        </IconButton> */}
+                    </Badge>
+
+                    {/* Settings */}
+                    <IconButton>
+                        <Settings sx={{ color: "#fff" }} />
+                    </IconButton>
+
+                    {/* Avatar + Menu */}
+                    <Avatar
+                        onClick={openMenu}
+                        sx={{
+                            width: 38,
+                            height: 38,
+                            cursor: "pointer",
+                            border: "2px solid #4f9bff",
+                        }}
+                    />
+
+                    <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
+                        <MenuItem onClick={closeMenu}>Profile</MenuItem>
+                        <MenuItem onClick={closeMenu}>Settings</MenuItem>
+                        <MenuItem onClick={closeMenu}>Logout</MenuItem>
+                    </Menu>
+                </Box>
+            </Toolbar>
+        </AppBar>
     );
 };
-
-const styles = (theme, isDark) => ({
-    container: {
-        height: "70px",
-        background: isDark
-            ? "rgba(26, 31, 58, 0.95)"
-            : "rgba(255, 255, 255, 0.95)",
-        backdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        px: { xs: 2, md: 4 },
-        position: "sticky",
-        top: 0,
-        zIndex: 999,
-        boxShadow: isDark
-            ? "0 2px 10px rgba(0,0,0,0.3)"
-            : "0 2px 10px rgba(0,0,0,0.05)",
-    },
-
-    left: {
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
-    },
-
-    title: {
-        fontSize: { xs: "1.2rem", md: "1.5rem" },
-        fontWeight: 800,
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.accent.pink})`,
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-    },
-
-    badge: {
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.accent.pink})`,
-        color: "#fff",
-        fontWeight: 700,
-        fontSize: "0.7rem",
-        height: "24px",
-    },
-
-    right: {
-        display: "flex",
-        alignItems: "center",
-        gap: 2,
-    },
-
-    iconBtn: {
-        color: theme.palette.text.primary,
-        transition: "all 0.3s",
-        "&:hover": {
-            background: theme.palette.action.hover,
-            transform: "scale(1.1)",
-        },
-    },
-
-    avatar: {
-        width: 40,
-        height: 40,
-        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.accent.pink})`,
-        fontWeight: 700,
-        cursor: "pointer",
-        transition: "all 0.3s",
-        "&:hover": {
-            transform: "scale(1.1)",
-            boxShadow: `0 4px 15px ${theme.palette.primary.main}66`,
-        },
-    },
-});
 
 export default AdminHeader;

@@ -10,14 +10,15 @@ const AdminLayout = ({ children }) => {
   const isDark = theme.palette.mode === "dark";
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
     <Box sx={styles(theme, isDark).container}>
       {/* Desktop Sidebar */}
-      {!isMobile && <AdminSidebar />}
+      {!isMobile && <AdminSidebar collapsed={collapsed} setCollapsed={setCollapsed} />}
 
       {/* Main Content Area */}
-      <Box sx={styles(theme, isDark).mainArea}>
+      <Box sx={styles(theme, isDark, collapsed).mainArea}>
         {/* Mobile Menu Button */}
         {isMobile && (
           <IconButton
@@ -42,13 +43,13 @@ const AdminLayout = ({ children }) => {
         onClose={() => setMobileOpen(false)}
         sx={styles(theme, isDark).drawer}
       >
-        <AdminSidebar />
+        <AdminSidebar collapsed={false} setCollapsed={() => { }} />
       </Drawer>
     </Box>
   );
 };
 
-const styles = (theme, isDark) => ({
+const styles = (theme, isDark, collapsed) => ({
   container: {
     display: "flex",
     minHeight: "100vh",
@@ -59,7 +60,7 @@ const styles = (theme, isDark) => ({
 
   mainArea: {
     flex: 1,
-    marginLeft: { xs: 0, md: "260px" },
+    marginLeft: { xs: 0, md: collapsed ? "80px" : "260px" },
     transition: "margin-left 0.3s ease",
     display: "flex",
     flexDirection: "column",

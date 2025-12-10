@@ -1,43 +1,68 @@
-// src/pages/AdminDashboard/index.jsx
-import React from "react";
-import AdminLayout from "../../components/Admin/AdminLayout";
-import { Typography, Box, Grid, Paper } from "@mui/material";
+import React, { useState } from "react";
+import { Box } from "@mui/material";
+import AdminSidebar from "../../components/Admin/AdminSidebar";
+import AdminHeader from "../../components/Admin/AdminHeader";
+import UserManagement from "../../components/AdminDashboard/UserManagement/UserManagement";
+import Transactions from "../../components/AdminDashboard/Transaction/Transaction";
+import Investments from "../../components/AdminDashboard/Investement/Investment";
+import Loan from "../../components/AdminDashboard/Loan/Loan";
+import Wallet from "../../components/AdminDashboard/Wallet/Wallet";
+import Kyc from "../../components/AdminDashboard/Kyc/Kyc";
+import Notification from "../../components/AdminDashboard/Notification/Notification";
+import Setting from "../../components/AdminDashboard/Setting/Setting";
+import Log from "../../components/AdminDashboard/Log/Log";
 
-const stats = [
-    { label: "Total Users", value: 1200 },
-    { label: "Total Investments", value: "₦45,000,000" },
-    { label: "Active Loans", value: 320 },
-    { label: "Community Stats", value: "Stable" },
-];
 
 const AdminDashboard = () => {
+    const [activeSection, setActiveSection] = useState("Users");
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+    const renderSection = () => {
+        switch (activeSection) {
+            case "Users":
+                return <UserManagement />;
+            case "Transactions":
+                return <Transactions />;
+            case "Investments":
+                return <Investments />;
+            case "Loan":
+                return <Loan />;
+            case "Wallet":
+                return <Wallet />;
+            case "Kyc":
+                return <Kyc />;
+            case "Notification":
+                return <Notification />;
+            case "Setting":
+                return <Setting />;
+            case "Log":
+                return <Log />;
+            default:
+                return <UserManagement />;
+        }
+    };
+
     return (
-        <AdminLayout>
-            <Typography variant="h4" sx={{ mb: 3 }}>
-                Welcome, Admin!
-            </Typography>
-            <Grid container spacing={2}>
-                {stats.map((stat, idx) => (
-                    <Grid item xs={12} sm={6} md={3} key={idx}>
-                        <Paper
-                            sx={{
-                                p: 2,
-                                background: "#6366f1",
-                                color: "#fff",
-                                borderRadius: "12px",
-                                textAlign: "center",
-                                boxShadow: "0 8px 16px rgba(0,0,0,0.15)",
-                            }}
-                        >
-                            <Typography variant="subtitle2">{stat.label}</Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                                {stat.value}
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                ))}
-            </Grid>
-        </AdminLayout>
+        <Box sx={{ display: "flex", minHeight: "100vh", backgroundColor: "#0a1f44" }}>
+            <AdminSidebar
+                activeSection={activeSection}
+                setActiveSection={setActiveSection}
+                isMobileOpen={mobileSidebarOpen}
+                toggleMobile={setMobileSidebarOpen}
+            />
+
+            <Box
+                sx={{
+                    flex: 1,
+                    ml: { xs: 0, sm: "260px" },
+                    pt: "80px",
+                    transition: "all 0.3s ease",
+                }}
+            >
+                <AdminHeader toggleMobile={setMobileSidebarOpen} />
+                <Box sx={{ px: { xs: 2, md: 4 }, pt: 2 }}>{renderSection()}</Box>
+            </Box>
+        </Box>
     );
 };
 
