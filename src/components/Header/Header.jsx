@@ -1,3 +1,4 @@
+// src/components/Header/Header.jsx
 import React, { useState, useEffect } from "react";
 import {
   AppBar,
@@ -18,7 +19,6 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import { Link } from "react-router-dom";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { getHeaderStyles } from "./styles";
-import AuthModal from "../AuthModal/AuthModal";
 
 const Header = ({ toggleTheme }) => {
   const isMobile = useMediaQuery("(max-width:960px)");
@@ -26,8 +26,6 @@ const Header = ({ toggleTheme }) => {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(true); // toggle modal between SignUp/Login
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -36,11 +34,6 @@ const Header = ({ toggleTheme }) => {
   }, []);
 
   const toggleDrawer = (open) => () => setDrawerOpen(open);
-
-  const openAuthModal = (signUp = true) => {
-    setIsSignUp(signUp);
-    setAuthOpen(true);
-  };
 
   const menuItems = [
     { name: "Home", path: "/" },
@@ -71,17 +64,21 @@ const Header = ({ toggleTheme }) => {
                   {item.name}
                 </Button>
               ))}
+
+              {/* Navigate to dedicated pages */}
               <Button
                 sx={styles.loginBtn}
                 variant="outlined"
-                onClick={() => openAuthModal(false)}
+                component={Link}
+                to="/login"
               >
                 Login
               </Button>
               <Button
                 sx={styles.signupBtn}
                 variant="contained"
-                onClick={() => openAuthModal(true)}
+                component={Link}
+                to="/signup"
               >
                 Sign Up
               </Button>
@@ -101,6 +98,7 @@ const Header = ({ toggleTheme }) => {
         </Toolbar>
       </AppBar>
 
+      {/* Mobile Drawer */}
       <Drawer
         anchor="top"
         open={drawerOpen}
@@ -135,10 +133,9 @@ const Header = ({ toggleTheme }) => {
               sx={styles.drawerLoginBtn}
               variant="outlined"
               fullWidth
-              onClick={() => {
-                openAuthModal(false);
-                setDrawerOpen(false);
-              }}
+              component={Link}
+              to="/login"
+              onClick={() => setDrawerOpen(false)}
             >
               Login
             </Button>
@@ -146,23 +143,15 @@ const Header = ({ toggleTheme }) => {
               sx={styles.drawerSignupBtn}
               variant="contained"
               fullWidth
-              onClick={() => {
-                openAuthModal(true);
-                setDrawerOpen(false);
-              }}
+              component={Link}
+              to="/signup"
+              onClick={() => setDrawerOpen(false)}
             >
               Sign Up
             </Button>
           </Box>
         </Box>
       </Drawer>
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
-        isSignUp={isSignUp}
-      />
     </>
   );
 };
