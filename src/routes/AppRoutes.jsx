@@ -7,9 +7,10 @@ import ContactPage from "../pages/ContactPage/ContactPage";
 import ServicesPage from "../pages/ServicesPage/ServicesPage";
 import DashboardPage from "../pages/DashboardPage/";
 import AdminDashboard from "../pages/AdminDashboard";
+import SignUpPage from "../pages/Public/Signup";
 import LoginPage from "../pages/Public/Login";
-import SignUpPage from "../pages/Public/SignUp";
 import OnboardingPage from "../pages/Public/OnboardingPage";
+import VerifyEmailPage from "../pages/Public/VerifyEmailPage";
 
 
 const AppRoutes = () => {
@@ -26,6 +27,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
     </Routes>
   );
 };

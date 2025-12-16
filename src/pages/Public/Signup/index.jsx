@@ -14,38 +14,35 @@ const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async () => {
-    if (!name || !email || !password) {
-      toast.error("Please fill all fields", {
-        style: { background: "#e53e3e", color: "#fff" },
-      });
-      return;
-    }
+ const handleSignUp = async () => {
+  if (!name || !email || !password) {
+    toast.error("Please fill all fields");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        redirectTo: window.location.origin + "/login",
-        user_metadata: { full_name: name },
-      },
-    });
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name: name },
+      emailRedirectTo: `${window.location.origin}/verify-email`,
+    },
+  });
 
-    setLoading(false);
+  setLoading(false);
 
-    if (error) {
-      toast.error(error.message, { style: { background: "#e53e3e", color: "#fff" } });
-      return;
-    }
+  if (error) {
+    toast.error(error.message);
+    return;
+  }
 
-    toast.success(`Welcome ${name}! Check your email to verify your account.`, {
-      style: { background: "#38a169", color: "#fff" },
-    });
+  toast.success("Check your email to verify your account");
 
-    navigate("/onboarding", { state: { showSuccessToast: true } });
-  };
+  // ✅ GO TO VERIFY PAGE — NOT ONBOARDING
+  navigate("/verify-email", { state: { email, name } });
+};
 
   return (
     <div style={styles.container}>
