@@ -1,47 +1,72 @@
-// src/components/Admin/Notifications/Notifications.jsx
-import { useState } from "react";
-import styles from "./styles";
+import React, { useEffect, useState } from "react";
+import supabase from "../../../supabase";
+import { List, ListItem, ListItemText, Button, Badge, IconButton } from "@mui/material";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import toast from "react-hot-toast";
 
-const initialNotifications = [
-    { id: 1, title: "New user registered", time: "2 mins ago", read: false },
-    { id: 2, title: "Investment approved", time: "1 hour ago", read: true },
-    { id: 3, title: "Loan request pending", time: "3 hours ago", read: false },
-    { id: 4, title: "KYC verification updated", time: "Yesterday", read: true },
-];
+const AdminNotifications = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-const Notifications = () => {
-    const [notifications, setNotifications] = useState(initialNotifications);
+  const fetchNotifications = async () => {
+    const { data, error } = await supabase
+      .from("admin_notifications")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const markAsRead = (id) => {
-        setNotifications(
-            notifications.map((n) => (n.id === id ? { ...n, read: true } : n))
-        );
+    if (error) return toast.error("Failed to fetch notifications");
+
+    setNotifications(data);
+    setUnreadCount(data.filter(n => !n.is_read).length);
+  };
+
+  const markAsRead = async (id) => {
+    await supabase.from("admin_notifications").update({ is_read: true }).eq("id", id);
+    fetchNotifications();
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    // Subscribe to realtime updates
+    const subscription = supabase
+      .channel("public:admin_notifications")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_notifications" }, payload => {
+        setNotifications(prev => [payload.new, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
     };
+  }, []);
 
-    return (
-        <div style={styles.wrapper}>
-            <h2 style={styles.title}>Notifications</h2>
+  return (
+    <div>
+      <IconButton>
+        <Badge badgeContent={unreadCount} color="error">
+          <NotificationsIcon />
+        </Badge>
+      </IconButton>
 
-            <div style={styles.listWrapper}>
-                {notifications.map((notification) => (
-                    <div
-                        key={notification.id}
-                        style={{
-                            ...styles.notificationItem,
-                            backgroundColor: notification.read ? "#1e293b" : "#374151",
-                        }}
-                        onClick={() => markAsRead(notification.id)}
-                    >
-                        <div style={styles.notificationContent}>
-                            <p style={styles.notificationTitle}>{notification.title}</p>
-                            <span style={styles.notificationTime}>{notification.time}</span>
-                        </div>
-                        {!notification.read && <span style={styles.unreadDot}></span>}
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+      <List>
+        {notifications.map((n) => (
+          <ListItem key={n.id} divider>
+            <ListItemText
+              primary={n.message}
+              secondary={new Date(n.created_at).toLocaleString()}
+            />
+            {!n.is_read && (
+              <Button onClick={() => markAsRead(n.id)} variant="contained">
+                Mark as read
+              </Button>
+            )}
+          </ListItem>
+        ))}
+      </List>
+    </div>
+  );
 };
 
-export default Notifications;
+export default AdminNotifications;

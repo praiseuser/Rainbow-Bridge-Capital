@@ -1,0 +1,30 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "../../../supabase";
+
+const AuthCallback = () => {
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleAuth = async () => {
+            const { data } = await supabase.auth.getSession();
+
+            if (data?.session) {
+                navigate("/onboarding", { replace: true });
+            } else {
+                navigate("/login", { replace: true });
+            }
+        };
+
+        handleAuth();
+    }, [navigate]);
+
+    return (
+        <div style={{ padding: 40, textAlign: "center" }}>
+            <h2>Verifying your email…</h2>
+            <p>Please wait, finishing setup.</p>
+        </div>
+    );
+};
+
+export default AuthCallback;

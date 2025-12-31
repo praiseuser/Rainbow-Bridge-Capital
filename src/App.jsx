@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import AppRoutes from "./routes/AppRoutes";
 import themeSettings from "./theme";
+import { Toaster } from "react-hot-toast";
 
 const App = () => {
   const [mode, setMode] = useState("dark");
@@ -19,6 +20,8 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppRoutes toggleTheme={toggleTheme} />
+
+      <Toaster position="top-right" />
     </ThemeProvider>
   );
 };

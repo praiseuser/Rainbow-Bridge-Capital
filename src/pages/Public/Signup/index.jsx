@@ -1,10 +1,31 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Box,
+  Container,
+  TextField,
+  Button,
+  Typography,
+  InputAdornment,
+  IconButton,
+  Card,
+  Fade,
+  Chip,
+  CircularProgress,
+} from "@mui/material";
+import {
+  Visibility,
+  VisibilityOff,
+  Person,
+  Email,
+  Lock,
+  TrendingUp,
+  CheckCircle,
+  ArrowForward,
+} from "@mui/icons-material";
+import toast from "react-hot-toast";
 import supabase from "../../../supabase";
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from "lucide-react";
-import { CircularProgress } from "@mui/material";
-import { styles, keyframes } from "./styles";
+import { styles } from "./styles";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -14,138 +35,229 @@ const SignUpPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
- const handleSignUp = async () => {
-  if (!name || !email || !password) {
-    toast.error("Please fill all fields");
-    return;
-  }
+  const handleSignUp = async () => {
+    if (!name || !email || !password) {
+      return toast.error("Please fill all fields");
+    }
 
-  setLoading(true);
+    if (password.length < 6) {
+      return toast.error("Password must be at least 6 characters");
+    }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: name },
-      emailRedirectTo: `${window.location.origin}/verify-email`,
-    },
-  });
+    setLoading(true);
 
-  setLoading(false);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-  if (error) {
-    toast.error(error.message);
-    return;
-  }
+      if (error) throw error;
 
-  toast.success("Check your email to verify your account");
+      toast.success("Account created! Check your email to verify.");
+      navigate("/verify-email");
+    } catch (err) {
+      console.error("Signup error:", err);
+      toast.error(err.message || "Signup failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // ✅ GO TO VERIFY PAGE — NOT ONBOARDING
-  navigate("/verify-email", { state: { email, name } });
-};
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSignUp();
+    }
+  };
 
   return (
-    <div style={styles.container}>
-      <Toaster position="top-right" />
-      <style>{keyframes}</style>
+    <Box sx={styles.pageContainer}>
+      {/* Background Decorations */}
+      <Box sx={styles.backgroundDecoration}>
+        <Box sx={styles.circle1} />
+        <Box sx={styles.circle2} />
+        <Box sx={styles.circle3} />
+      </Box>
 
-      <div style={styles.bgOrb1} />
-      <div style={styles.bgOrb2} />
-      <div style={styles.bgOrb3} />
+      <Container maxWidth="sm">
+        <Fade in timeout={800}>
+          <Box sx={styles.contentWrapper}>
+            {/* Logo/Brand Section */}
+            <Box sx={styles.brandSection}>
+              <Box sx={styles.logoWrapper}>
+                <TrendingUp sx={{ fontSize: 40, color: "white" }} />
+              </Box>
+              <Typography variant="h4" sx={styles.brandTitle}>
+                Join Our Platform
+              </Typography>
+              <Typography variant="body1" sx={styles.brandSubtitle}>
+                Start your investment journey today
+              </Typography>
+            </Box>
 
-      <div style={styles.formWrapper}>
-        <div style={styles.formCard}>
-          <div style={styles.header}>
-            <div style={styles.logoWrapper}>
-              <div style={styles.logo}>🌈</div>
-            </div>
-            <h1 style={styles.title}>Create Account</h1>
-            <p style={styles.subtitle}>Join Rainbow Bridge Capital today</p>
-          </div>
-
-          <div style={styles.form}>
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Full Name</label>
-              <div style={styles.inputWrapper}>
-                <User size={20} color="#6b7280" style={styles.icon} />
-                <input
-                  style={styles.input}
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+            {/* Signup Card */}
+            <Card sx={styles.signupCard}>
+              <Box sx={styles.cardHeader}>
+                <Typography variant="h5" sx={styles.cardTitle}>
+                  Create Account
+                </Typography>
+                <Chip
+                  icon={<CheckCircle />}
+                  label="Free Forever"
+                  sx={styles.freeBadge}
+                  size="small"
                 />
-              </div>
-            </div>
+              </Box>
 
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Email Address</label>
-              <div style={styles.inputWrapper}>
-                <Mail size={20} color="#6b7280" style={styles.icon} />
-                <input
-                  style={styles.input}
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
+              <Box sx={styles.formContainer}>
+                {/* Full Name Input */}
+                <Box sx={styles.inputWrapper}>
+                  <Typography variant="body2" sx={styles.inputLabel}>
+                    Full Name
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Person sx={styles.inputIcon} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={styles.textField}
+                  />
+                </Box>
 
-            <div style={styles.inputGroup}>
-              <label style={styles.label}>Password</label>
-              <div style={styles.inputWrapper}>
-                <Lock size={20} color="#6b7280" style={styles.icon} />
-                <input
-                  style={styles.input}
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a strong password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  style={styles.eyeBtn}
-                  onClick={() => setShowPassword(!showPassword)}
-                  type="button"
+                {/* Email Input */}
+                <Box sx={styles.inputWrapper}>
+                  <Typography variant="body2" sx={styles.inputLabel}>
+                    Email Address
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Email sx={styles.inputIcon} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={styles.textField}
+                  />
+                </Box>
+
+                {/* Password Input */}
+                <Box sx={styles.inputWrapper}>
+                  <Typography variant="body2" sx={styles.inputLabel}>
+                    Password
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a strong password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={styles.inputIcon} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                            sx={styles.visibilityButton}
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={styles.textField}
+                  />
+                  <Typography variant="caption" sx={styles.passwordHint}>
+                    Must be at least 6 characters
+                  </Typography>
+                </Box>
+
+                {/* Sign Up Button */}
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleSignUp}
+                  disabled={loading}
+                  endIcon={loading ? null : <ArrowForward />}
+                  sx={styles.signupButton}
                 >
-                  {showPassword ? <EyeOff size={20} color="#6b7280" /> : <Eye size={20} color="#6b7280" />}
-                </button>
-              </div>
-            </div>
+                  {loading ? (
+                    <CircularProgress size={24} sx={{ color: "white" }} />
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
 
-            <button
-              style={{ ...styles.submitBtn, ...(loading && styles.submitBtnLoading) }}
-              onClick={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : (
-                <>
-                  <span style={styles.submitBtnText}>Create Account</span>
-                  <ArrowRight size={20} />
-                </>
-              )}
-            </button>
-          </div>
-        </div>
+                {/* Benefits List */}
+                <Box sx={styles.benefitsList}>
+                  <Box sx={styles.benefitItem}>
+                    <CheckCircle sx={styles.benefitIcon} />
+                    <Typography variant="body2" sx={styles.benefitText}>
+                      Instant wallet creation
+                    </Typography>
+                  </Box>
+                  <Box sx={styles.benefitItem}>
+                    <CheckCircle sx={styles.benefitIcon} />
+                    <Typography variant="body2" sx={styles.benefitText}>
+                      Secure investment platform
+                    </Typography>
+                  </Box>
+                  <Box sx={styles.benefitItem}>
+                    <CheckCircle sx={styles.benefitIcon} />
+                    <Typography variant="body2" sx={styles.benefitText}>
+                      24/7 customer support
+                    </Typography>
+                  </Box>
+                </Box>
 
-        <div style={styles.features}>
-          <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>🔒</div>
-            <div style={styles.featureText}>Secure & Encrypted</div>
-          </div>
-          <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>⚡</div>
-            <div style={styles.featureText}>Quick Setup</div>
-          </div>
-          <div style={styles.featureCard}>
-            <div style={styles.featureIcon}>🎯</div>
-            <div style={styles.featureText}>Get Started Free</div>
-          </div>
-        </div>
-      </div>
-    </div>
+                {/* Login Link */}
+                <Box sx={styles.loginLinkContainer}>
+                  <Typography variant="body2" sx={styles.loginText}>
+                    Already have an account?{" "}
+                    <Link to="/login" style={styles.loginLink}>
+                      Sign In
+                    </Link>
+                  </Typography>
+                </Box>
+              </Box>
+            </Card>
+
+            {/* Footer */}
+            <Typography variant="caption" sx={styles.footer}>
+              By signing up, you agree to our Terms of Service and Privacy
+              Policy
+            </Typography>
+          </Box>
+        </Fade>
+      </Container>
+    </Box>
   );
 };
 

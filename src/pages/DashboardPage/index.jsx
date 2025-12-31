@@ -2,11 +2,17 @@ import React, { useState } from "react";
 import { Box } from "@mui/material";
 import DashboardHeader from "../../components/Dashboard/DashboardHeader";
 import DashboardSidebar from "../../components/Dashboard/DashboardSidebar";
-import Overview from "../../components/Dashboard/Overview";
-import Investment from "../../components/Dashboard/Investment";
+import Overview from "../../components/Dashboard/Overview/Overview";
+import Investment from "../../components/Dashboard/Investment/Investment";
+import MyInvestment from "../../components/Dashboard/MyInvestment/MyInvestement";
 import Wallet from "../../components/Dashboard/Wallet";
 import Loan from "../../components/Dashboard/Loan";
 import CommunityVerification from "../../components/Dashboard/CommunityVerification";
+import WithdrawalPage from "../../components/Dashboard/Withdraw";
+import TransactionHistoryPage from "../../components/Dashboard/Transactions";
+import ProfilePage from "../../components/Dashboard/ProfilePage";
+import NotificationsPage from "../../components/Dashboard/Notifications";
+import SupportPage from "../../components/Dashboard/Support";
 
 const DashboardPage = () => {
     const [activeSection, setActiveSection] = useState("Overview");
@@ -18,10 +24,22 @@ const DashboardPage = () => {
                 return <Overview />;
             case "Investment":
                 return <Investment />;
+            case "My Investment":
+                return <MyInvestment />;
             case "Wallet":
                 return <Wallet />;
             case "Loan":
                 return <Loan />;
+            case "Withdraw":
+                return <WithdrawalPage />;
+            case "Profile":
+                return <ProfilePage />;
+            case "Notifications":
+                return <NotificationsPage />;
+            case "Support":
+                return <SupportPage />;
+            case "Transactions":
+                return <TransactionHistoryPage />;
             case "Community":
                 return <CommunityVerification />;
             default:

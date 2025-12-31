@@ -13,6 +13,7 @@ const AdminSidebar = ({ activeSection, setActiveSection, isMobileOpen, toggleMob
     const menuItems = [
         { label: "Users", icon: <Users size={20} /> },
         { label: "Transactions", icon: <CreditCard size={20} /> },
+        { label: "Funding", icon: <CreditCard size={20} /> },
         { label: "Investments", icon: <Wallet size={20} /> },
         { label: "Loan", icon: <ShieldCheck size={20} /> },
         { label: "Wallet", icon: <Wallet size={20} /> },

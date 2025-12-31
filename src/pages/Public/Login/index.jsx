@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import supabase from "../../../supabase";
+import { checkUserBlocked } from "../../../utilities/checkUserBlocked";
 import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { CircularProgress } from "@mui/material";
 import { styles, keyframes } from "./styles";
@@ -14,6 +15,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
+    // Show success toast after signup
     useEffect(() => {
         if (location.state?.showSuccessToast) {
             toast.success("Account created successfully!", {
@@ -24,26 +26,63 @@ const LoginPage = () => {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            toast.error("Please fill all fields", { style: { background: "#e53e3e", color: "#fff" } });
+            toast.error("Please fill all fields", { 
+                style: { background: "#e53e3e", color: "#fff" } 
+            });
             return;
         }
 
         setLoading(true);
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        setLoading(false);
 
-        if (error) {
-            toast.error(error.message, { style: { background: "#e53e3e", color: "#fff" } });
-            return;
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({ 
+                email, 
+                password 
+            });
+
+            if (error) throw error;
+
+            // Check if user is blocked immediately after login
+            const blockCheck = await checkUserBlocked(data.user.id);
+            
+            if (blockCheck.blocked) {
+                // User is blocked, show error and stop login
+                toast.error(blockCheck.message, { 
+                    style: { background: "#e53e3e", color: "#fff" },
+                    duration: 5000
+                });
+                await supabase.auth.signOut();
+                setLoading(false);
+                return;
+            }
+
+            // User is not blocked, proceed with login
+            console.log("Logged in user metadata:", data.user.user_metadata);
+
+            const role = data.user.user_metadata?.role;
+
+            toast.success("Welcome back!", { 
+                style: { background: "#38a169", color: "#fff" } 
+            });
+
+            // Navigate based on role
+            if (role === "admin") {
+                navigate("/admin");
+            } else {
+                navigate("/dashboard");
+            }
+        } catch (err) {
+            console.error("Login error:", err);
+            toast.error(err.message || "Login failed", { 
+                style: { background: "#e53e3e", color: "#fff" } 
+            });
+        } finally {
+            setLoading(false);
         }
-
-        toast.success("Welcome back!", { style: { background: "#38a169", color: "#fff" } });
-        navigate("/dashboard");
     };
 
     return (
         <div style={styles.container}>
-            <Toaster position="top-right" />
             <style>{keyframes}</style>
 
             <div style={styles.bgOrb1} />

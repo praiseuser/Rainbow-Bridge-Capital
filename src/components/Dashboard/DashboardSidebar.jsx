@@ -9,9 +9,15 @@ import PeopleIcon from "@mui/icons-material/People";
 const sections = [
   { name: "Overview", icon: <DashboardIcon /> },
   { name: "Investment", icon: <ShowChartIcon /> },
+  { name: "My Investment", icon: <ShowChartIcon /> },
   { name: "Wallet", icon: <AccountBalanceWalletIcon /> },
+  { name: "Withdraw", icon: <AttachMoneyIcon /> },
   { name: "Loan", icon: <AttachMoneyIcon /> },
   { name: "Community", icon: <PeopleIcon /> },
+  { name: "Notifications", icon: <AttachMoneyIcon /> },
+  { name: "Transactions", icon: <AttachMoneyIcon /> },
+  { name: "Profile", icon: <PeopleIcon /> },
+  { name: "Support", icon: <PeopleIcon /> },
 ];
 
 const DashboardSidebar = ({ activeSection, setActiveSection, isMobileOpen, toggleMobile }) => {

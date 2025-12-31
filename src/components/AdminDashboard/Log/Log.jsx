@@ -1,40 +1,75 @@
-// src/components/Admin/SystemLogs/SystemLogs.jsx
-import styles from "./styles";
+import React, { useEffect, useState } from "react";
+import supabase from "../../../supabase";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableRow,
+    Typography,
+    Box,
+} from "@mui/material";
 
-const logs = [
-    { id: 1, action: "Approved user John Doe", date: "2025-12-10 09:12" },
-    { id: 2, action: "Updated investment ROI for Mary Okafor", date: "2025-12-10 09:45" },
-    { id: 3, action: "Rejected loan request for James Obi", date: "2025-12-10 10:03" },
-    { id: 4, action: "Updated site settings", date: "2025-12-10 10:15" },
-];
+const AdminAuditLogs = () => {
+    const [logs, setLogs] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-const Log = () => {
+    const fetchLogs = async () => {
+        setLoading(true);
+
+        const { data, error } = await supabase
+            .from("audit_logs")
+            .select(`
+        *,
+        admin:users(email)
+      `)
+            .order("created_at", { ascending: false });
+
+        if (!error) setLogs(data || []);
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        fetchLogs();
+    }, []);
+
     return (
-        <div style={styles.wrapper}>
-            <h2 style={styles.title}>System Logs</h2>
+        <Box>
+            <Typography variant="h5" mb={2}>
+                Admin Audit Logs
+            </Typography>
 
-            <div style={styles.tableWrapper}>
-                <table style={styles.table}>
-                    <thead style={styles.thead}>
-                        <tr>
-                            <th style={styles.th}>ID</th>
-                            <th style={styles.th}>Action</th>
-                            <th style={styles.th}>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            {loading ? (
+                <Typography>Loading...</Typography>
+            ) : logs.length === 0 ? (
+                <Typography>No logs found</Typography>
+            ) : (
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Admin</TableCell>
+                            <TableCell>Action</TableCell>
+                            <TableCell>Description</TableCell>
+                            <TableCell>Date</TableCell>
+                        </TableRow>
+                    </TableHead>
+
+                    <TableBody>
                         {logs.map((log) => (
-                            <tr key={log.id} style={styles.row}>
-                                <td style={styles.td}>{log.id}</td>
-                                <td style={styles.td}>{log.action}</td>
-                                <td style={styles.td}>{log.date}</td>
-                            </tr>
+                            <TableRow key={log.id}>
+                                <TableCell>{log.admin?.email || "System"}</TableCell>
+                                <TableCell>{log.action}</TableCell>
+                                <TableCell>{log.description}</TableCell>
+                                <TableCell>
+                                    {new Date(log.created_at).toLocaleString()}
+                                </TableCell>
+                            </TableRow>
                         ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    </TableBody>
+                </Table>
+            )}
+        </Box>
     );
 };
 
-export default Log;
+export default AdminAuditLogs;

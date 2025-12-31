@@ -1,301 +1,147 @@
-import React, { useState, useMemo } from "react";
-import SearchIcon from "@mui/icons-material/Search";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import EditIcon from "@mui/icons-material/Edit";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import styles from "./styles";
-import UpdateInvestmentModal from "./UpdateInvestmentModal/UpdateInvestmentModal";
+import React, { useEffect, useState } from "react";
+import supabase from "../../../supabase";
+import toast from "react-hot-toast";
+import { Button } from "@mui/material";
 
-const initialInvestments = [
-    {
-        id: "INV001",
-        user: "John Doe",
-        email: "john@gmail.com",
-        plan: "Gold Plan",
-        amount: 100000,
-        returns: 150000,
-        startDate: "2025-01-01",
-        endDate: "2025-02-01",
-        status: "Active",
-    },
-    {
-        id: "INV002",
-        user: "Mary Okafor",
-        email: "mary@gmail.com",
-        plan: "Starter Plan",
-        amount: 50000,
-        returns: 70000,
-        startDate: "2025-01-03",
-        endDate: "2025-02-03",
-        status: "Completed",
-    },
-    {
-        id: "INV003",
-        user: "James Obi",
-        email: "james@gmail.com",
-        plan: "Diamond Plan",
-        amount: 200000,
-        returns: 240000,
-        startDate: "2025-01-07",
-        endDate: "2025-03-07",
-        status: "Pending",
-    },
-];
+const AdminInvestments = () => {
+  const [investments, setInvestments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
 
-const InvestmentManagement = () => {
-    const [investments] = useState(initialInvestments);
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("All");
-    const [selectedInvestment, setSelectedInvestment] = useState(null);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [page, setPage] = useState(1);
-    const rowsPerPage = 6;
+  const fetchInvestments = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("investments")
+        .select(`
+          id,
+          amount,
+          roi_amount,
+          status,
+          start_date,
+          end_date,
+          created_at,
+          user:users(email)
+        `)
+        .order("created_at", { ascending: false });
 
-    const filtered = useMemo(() => {
-        return investments.filter((inv) => {
-            const matchesSearch =
-                inv.user.toLowerCase().includes(search.toLowerCase()) ||
-                inv.email.toLowerCase().includes(search.toLowerCase()) ||
-                inv.plan.toLowerCase().includes(search.toLowerCase());
+      if (error) throw error;
+      setInvestments(data);
+    } catch (err) {
+      console.error("Error fetching investments:", err);
+      toast.error("Failed to load investments");
+    }
+    setLoading(false);
+  };
 
-            const matchesStatus = statusFilter === "All" || inv.status === statusFilter;
+  useEffect(() => {
+    fetchInvestments();
+  }, []);
 
-            return matchesSearch && matchesStatus;
-        });
-    }, [search, statusFilter, investments]);
+  const updateStatus = async (investment, newStatus) => {
+    try {
+      setProcessingId(investment.id);
 
-    const indexOfLast = page * rowsPerPage;
-    const indexOfFirst = indexOfLast - rowsPerPage;
-    const currentRows = filtered.slice(indexOfFirst, indexOfLast);
-    const totalPages = Math.ceil(filtered.length / rowsPerPage);
+      // ✅ If marking completed, add ROI to user's wallet
+      if (newStatus === "completed") {
+        const { data: wallet, error: walletError } = await supabase
+          .from("wallets")
+          .select("*")
+          .eq("user_id", investment.user_id)
+          .single();
 
-    const exportCSV = () => {
-        const headers = "ID,User,Email,Plan,Amount,Returns,Start Date,End Date,Status\n";
-        const rows = filtered
-            .map(
-                (i) =>
-                    `${i.id},${i.user},${i.email},${i.plan},${i.amount},${i.returns},${i.startDate},${i.endDate},${i.status}`
-            )
-            .join("\n");
+        if (walletError) throw walletError;
 
-        const blob = new Blob([headers + rows], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "investments.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-    };
+        const { error: walletUpdateError } = await supabase
+          .from("wallets")
+          .update({ balance: wallet.balance + investment.roi_amount })
+          .eq("user_id", investment.user_id);
 
-    const handleUpdateClick = (inv) => {
-        setSelectedInvestment(inv);
-        setModalOpen(true);
-    };
+        if (walletUpdateError) throw walletUpdateError;
+      }
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "Active":
-                return { bg: "#2563eb20", color: "#2563eb" };
-            case "Completed":
-                return { bg: "#16a34a20", color: "#16a34a" };
-            case "Pending":
-                return { bg: "#f59e0b20", color: "#f59e0b" };
-            default:
-                return { bg: "#64748b20", color: "#64748b" };
-        }
-    };
+      // 2️⃣ Update investment status
+      const { error } = await supabase
+        .from("investments")
+        .update({ status: newStatus })
+        .eq("id", investment.id);
 
-    const calculateProgress = (start, end) => {
-        const startDate = new Date(start).getTime();
-        const endDate = new Date(end).getTime();
-        const now = new Date().getTime();
-        const total = endDate - startDate;
-        const elapsed = now - startDate;
-        const progress = Math.min(Math.max((elapsed / total) * 100, 0), 100);
-        return Math.round(progress);
-    };
+      if (error) throw error;
 
-    return (
-        <div style={styles.container}>
-            {/* Header */}
-            <div style={styles.header}>
-                <div>
-                    <h2 style={styles.title}>Investment Management</h2>
-                    <p style={styles.subtitle}>{filtered.length} investments found</p>
-                </div>
-                <button style={styles.exportBtn} onClick={exportCSV}>
-                    <FileDownloadIcon style={{ fontSize: "1.2rem", marginRight: "8px" }} />
-                    Export CSV
-                </button>
-            </div>
+      toast.success(
+        newStatus === "completed"
+          ? "Investment completed & ROI credited"
+          : `Investment ${newStatus}`
+      );
+      fetchInvestments();
+    } catch (err) {
+      console.error(err);
+      toast.error("Action failed");
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
-            {/* Filters */}
-            <div style={styles.filterPaper}>
-                <div style={styles.filterRow}>
-                    <div style={styles.searchWrapper}>
-                        <SearchIcon style={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Search user, email or plan..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            style={styles.searchInput}
-                        />
-                    </div>
+  if (loading) return <p>Loading investments...</p>;
 
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        style={styles.filterSelect}
-                    >
-                        <option value="All">All Status</option>
-                        <option value="Active">Active</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Pending">Pending</option>
-                    </select>
-                </div>
-            </div>
+  return (
+    <div>
+      <h2>Investment Monitoring</h2>
 
-            {/* Investment Cards */}
-            <div style={styles.cardGrid}>
-                {currentRows.map((inv, index) => {
-                    const statusColors = getStatusColor(inv.status);
-                    const progress = calculateProgress(inv.startDate, inv.endDate);
+      {investments.length === 0 && <p>No investments found.</p>}
 
-                    return (
-                        <div
-                            key={inv.id}
-                            style={{
-                                ...styles.investmentCard,
-                                animationDelay: `${index * 0.1}s`,
-                            }}
-                        >
-                            {/* Card Header */}
-                            <div style={styles.cardHeader}>
-                                <div style={styles.cardHeaderLeft}>
-                                    <div style={styles.planIcon}>
-                                        <TrendingUpIcon style={{ fontSize: "1.5rem", color: "#667eea" }} />
-                                    </div>
-                                    <div>
-                                        <p style={styles.userName}>{inv.user}</p>
-                                        <p style={styles.userEmail}>{inv.email}</p>
-                                    </div>
-                                </div>
+      {investments.map((inv) => (
+        <div
+          key={inv.id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "1rem",
+            marginBottom: "1rem",
+            borderRadius: "8px",
+          }}
+        >
+          <p><strong>User:</strong> {inv.user?.email}</p>
+          <p><strong>Amount:</strong> ${inv.amount}</p>
+          <p><strong>ROI:</strong> ${inv.roi_amount}</p>
+          <p><strong>Status:</strong> {inv.status}</p>
+          <p><strong>Start:</strong> {inv.start_date}</p>
+          <p><strong>End:</strong> {inv.end_date}</p>
 
-                                <span
-                                    style={{
-                                        ...styles.statusChip,
-                                        background: statusColors.bg,
-                                        color: statusColors.color,
-                                    }}
-                                >
-                                    {inv.status}
-                                </span>
-                            </div>
+          {inv.status === "pending" && (
+            <>
+              <Button
+                variant="contained"
+                onClick={() => updateStatus(inv, "active")}
+                disabled={processingId === inv.id}
+              >
+                Approve
+              </Button>
 
-                            {/* Plan Name */}
-                            <div style={styles.planBadge}>{inv.plan}</div>
+              <Button
+                color="error"
+                sx={{ ml: 1 }}
+                onClick={() => updateStatus(inv, "rejected")}
+                disabled={processingId === inv.id}
+              >
+                Reject
+              </Button>
+            </>
+          )}
 
-                            {/* Amount Section */}
-                            <div style={styles.amountSection}>
-                                <div style={styles.amountItem}>
-                                    <p style={styles.amountLabel}>Investment</p>
-                                    <p style={styles.amountValue}>₦{inv.amount.toLocaleString()}</p>
-                                </div>
-                                <div style={styles.divider}></div>
-                                <div style={styles.amountItem}>
-                                    <p style={styles.amountLabel}>Returns</p>
-                                    <p style={styles.returnValue}>₦{inv.returns.toLocaleString()}</p>
-                                </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            {inv.status === "Active" && (
-                                <div style={styles.progressSection}>
-                                    <div style={styles.progressHeader}>
-                                        <span style={styles.progressLabel}>Progress</span>
-                                        <span style={styles.progressPercent}>{progress}%</span>
-                                    </div>
-                                    <div style={styles.progressBar}>
-                                        <div
-                                            style={{
-                                                ...styles.progressFill,
-                                                width: `${progress}%`,
-                                            }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Dates */}
-                            <div style={styles.datesSection}>
-                                <div style={styles.dateItem}>
-                                    <CalendarTodayIcon style={styles.dateIcon} />
-                                    <div>
-                                        <p style={styles.dateLabel}>Start Date</p>
-                                        <p style={styles.dateValue}>{inv.startDate}</p>
-                                    </div>
-                                </div>
-                                <div style={styles.dateItem}>
-                                    <CalendarTodayIcon style={styles.dateIcon} />
-                                    <div>
-                                        <p style={styles.dateLabel}>End Date</p>
-                                        <p style={styles.dateValue}>{inv.endDate}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Update Button */}
-                            <button style={styles.updateBtn} onClick={() => handleUpdateClick(inv)}>
-                                <EditIcon style={{ fontSize: "1rem", marginRight: "6px" }} />
-                                Update Investment
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Pagination */}
-            <div style={styles.pagination}>
-                <button
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                    style={{
-                        ...styles.pageBtn,
-                        opacity: page === 1 ? 0.3 : 1,
-                        cursor: page === 1 ? "not-allowed" : "pointer",
-                    }}
-                >
-                    <ChevronLeftIcon />
-                </button>
-
-                <span style={styles.pageInfo}>
-                    Page {page} of {totalPages}
-                </span>
-
-                <button
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                    style={{
-                        ...styles.pageBtn,
-                        opacity: page === totalPages ? 0.3 : 1,
-                        cursor: page === totalPages ? "not-allowed" : "pointer",
-                    }}
-                >
-                    <ChevronRightIcon />
-                </button>
-            </div>
-
-            <UpdateInvestmentModal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                investment={selectedInvestment}
-            />
+          {inv.status === "active" && (
+            <Button
+              color="success"
+              sx={{ ml: 1 }}
+              onClick={() => updateStatus(inv, "completed")}
+              disabled={processingId === inv.id}
+            >
+              {processingId === inv.id ? "Processing..." : "Mark Completed"}
+            </Button>
+          )}
         </div>
-    );
+      ))}
+    </div>
+  );
 };
 
-export default InvestmentManagement;
+export default AdminInvestments;

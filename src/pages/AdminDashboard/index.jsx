@@ -11,6 +11,7 @@ import Kyc from "../../components/AdminDashboard/Kyc/Kyc";
 import Notification from "../../components/AdminDashboard/Notification/Notification";
 import Setting from "../../components/AdminDashboard/Setting/Setting";
 import Log from "../../components/AdminDashboard/Log/Log";
+import AdminFundings from "../../components/AdminDashboard/Fundings";
 
 
 const AdminDashboard = () => {
@@ -21,6 +22,8 @@ const AdminDashboard = () => {
         switch (activeSection) {
             case "Users":
                 return <UserManagement />;
+                case "Funding":
+                return <AdminFundings />;
             case "Transactions":
                 return <Transactions />;
             case "Investments":
