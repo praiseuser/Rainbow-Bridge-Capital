@@ -1,28 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import {
-  Box,
-  Container,
-  TextField,
-  Button,
-  Typography,
-  InputAdornment,
-  IconButton,
-  Card,
-  Fade,
-  Chip,
-  CircularProgress,
-} from "@mui/material";
-import {
-  Visibility,
-  VisibilityOff,
-  Person,
-  Email,
-  Lock,
-  TrendingUp,
-  CheckCircle,
-  ArrowForward,
-} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
+import { User, Mail, Lock, Eye, EyeOff, TrendingUp, CheckCircle, ArrowRight, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import supabase from "../../../supabase";
 import { styles } from "./styles";
@@ -39,7 +17,6 @@ const SignUpPage = () => {
     if (!name || !email || !password) {
       return toast.error("Please fill all fields");
     }
-
     if (password.length < 6) {
       return toast.error("Password must be at least 6 characters");
     }
@@ -51,9 +28,7 @@ const SignUpPage = () => {
         email,
         password,
         options: {
-          data: {
-            full_name: name,
-          },
+          data: { full_name: name },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
@@ -71,193 +46,141 @@ const SignUpPage = () => {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSignUp();
-    }
+    if (e.key === "Enter") handleSignUp();
   };
 
   return (
-    <Box sx={styles.pageContainer}>
-      {/* Background Decorations */}
-      <Box sx={styles.backgroundDecoration}>
-        <Box sx={styles.circle1} />
-        <Box sx={styles.circle2} />
-        <Box sx={styles.circle3} />
-      </Box>
+    <>
+      <style>{`
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
+        
+        .input:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+        .eye-btn:hover { color: #6366f1; }
+        .button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(99, 102, 241, 0.5); }
+        .button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .link:hover { text-decoration: underline; }
+        
+        @media (max-width: 500px) {
+          .card { padding: 30px 24px; }
+        }
+      `}</style>
 
-      <Container maxWidth="sm">
-        <Fade in timeout={800}>
-          <Box sx={styles.contentWrapper}>
-            {/* Logo/Brand Section */}
-            <Box sx={styles.brandSection}>
-              <Box sx={styles.logoWrapper}>
-                <TrendingUp sx={{ fontSize: 40, color: "white" }} />
-              </Box>
-              <Typography variant="h4" sx={styles.brandTitle}>
-                Join Our Platform
-              </Typography>
-              <Typography variant="body1" sx={styles.brandSubtitle}>
-                Start your investment journey today
-              </Typography>
-            </Box>
+      <div style={styles.page}>
+        <div style={styles.bgEffect} />
+        
+        <div style={styles.container}>
+          <div style={styles.logo}>
+            <TrendingUp size={32} color="white" />
+          </div>
+          
+          <h1 style={styles.title}>Join Our Platform</h1>
+          <p style={styles.subtitle}>Start your investment journey today</p>
+          
+          <div className="card" style={styles.card}>
+            <div style={styles.badge}>
+              <Sparkles size={14} />
+              Free Forever
+            </div>
 
-            {/* Signup Card */}
-            <Card sx={styles.signupCard}>
-              <Box sx={styles.cardHeader}>
-                <Typography variant="h5" sx={styles.cardTitle}>
-                  Create Account
-                </Typography>
-                <Chip
-                  icon={<CheckCircle />}
-                  label="Free Forever"
-                  sx={styles.freeBadge}
-                  size="small"
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Full Name</label>
+              <div style={styles.inputWrapper}>
+                <User size={18} style={styles.inputIcon} />
+                <input
+                  className="input"
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyPress={handleKeyPress}
                 />
-              </Box>
+              </div>
+            </div>
 
-              <Box sx={styles.formContainer}>
-                {/* Full Name Input */}
-                <Box sx={styles.inputWrapper}>
-                  <Typography variant="body2" sx={styles.inputLabel}>
-                    Full Name
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Enter your full name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Person sx={styles.inputIcon} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={styles.textField}
-                  />
-                </Box>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Email Address</label>
+              <div style={styles.inputWrapper}>
+                <Mail size={18} style={styles.inputIcon} />
+                <input
+                  className="input"
+                  style={styles.input}
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                />
+              </div>
+            </div>
 
-                {/* Email Input */}
-                <Box sx={styles.inputWrapper}>
-                  <Typography variant="body2" sx={styles.inputLabel}>
-                    Email Address
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Email sx={styles.inputIcon} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={styles.textField}
-                  />
-                </Box>
-
-                {/* Password Input */}
-                <Box sx={styles.inputWrapper}>
-                  <Typography variant="body2" sx={styles.inputLabel}>
-                    Password
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a strong password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Lock sx={styles.inputIcon} />
-                        </InputAdornment>
-                      ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            sx={styles.visibilityButton}
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={styles.textField}
-                  />
-                  <Typography variant="caption" sx={styles.passwordHint}>
-                    Must be at least 6 characters
-                  </Typography>
-                </Box>
-
-                {/* Sign Up Button */}
-                <Button
-                  fullWidth
-                  variant="contained"
-                  size="large"
-                  onClick={handleSignUp}
-                  disabled={loading}
-                  endIcon={loading ? null : <ArrowForward />}
-                  sx={styles.signupButton}
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Password</label>
+              <div style={styles.inputWrapper}>
+                <Lock size={18} style={styles.inputIcon} />
+                <input
+                  className="input"
+                  style={{...styles.input, ...styles.inputPassword}}
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a strong password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                />
+                <button
+                  className="eye-btn"
+                  style={styles.eyeBtn}
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  {loading ? (
-                    <CircularProgress size={24} sx={{ color: "white" }} />
-                  ) : (
-                    "Create Account"
-                  )}
-                </Button>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p style={styles.hint}>Must be at least 6 characters</p>
+            </div>
 
-                {/* Benefits List */}
-                <Box sx={styles.benefitsList}>
-                  <Box sx={styles.benefitItem}>
-                    <CheckCircle sx={styles.benefitIcon} />
-                    <Typography variant="body2" sx={styles.benefitText}>
-                      Instant wallet creation
-                    </Typography>
-                  </Box>
-                  <Box sx={styles.benefitItem}>
-                    <CheckCircle sx={styles.benefitIcon} />
-                    <Typography variant="body2" sx={styles.benefitText}>
-                      Secure investment platform
-                    </Typography>
-                  </Box>
-                  <Box sx={styles.benefitItem}>
-                    <CheckCircle sx={styles.benefitIcon} />
-                    <Typography variant="body2" sx={styles.benefitText}>
-                      24/7 customer support
-                    </Typography>
-                  </Box>
-                </Box>
+            <button
+              className="button"
+              style={styles.button}
+              onClick={handleSignUp}
+              disabled={loading}
+            >
+              {loading ? "Creating..." : "Create Account"}
+              {!loading && <ArrowRight size={20} />}
+            </button>
 
-                {/* Login Link */}
-                <Box sx={styles.loginLinkContainer}>
-                  <Typography variant="body2" sx={styles.loginText}>
-                    Already have an account?{" "}
-                    <Link to="/login" style={styles.loginLink}>
-                      Sign In
-                    </Link>
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
+            <div style={styles.benefits}>
+              <div style={styles.benefit}>
+                <CheckCircle size={18} style={styles.benefitIcon} />
+                <span style={styles.benefitText}>Instant wallet creation</span>
+              </div>
+              <div style={styles.benefit}>
+                <CheckCircle size={18} style={styles.benefitIcon} />
+                <span style={styles.benefitText}>Secure investment platform</span>
+              </div>
+              <div style={styles.benefit}>
+                <CheckCircle size={18} style={styles.benefitIcon} />
+                <span style={styles.benefitText}>24/7 customer support</span>
+              </div>
+            </div>
 
-            {/* Footer */}
-            <Typography variant="caption" sx={styles.footer}>
-              By signing up, you agree to our Terms of Service and Privacy
-              Policy
-            </Typography>
-          </Box>
-        </Fade>
-      </Container>
-    </Box>
+            <div style={styles.footer}>
+              Already have an account?{" "}
+              <span 
+                className="link"
+                style={styles.link}
+                onClick={() => navigate("/login")}
+              >
+                Sign In
+              </span>
+            </div>
+          </div>
+
+          <p style={styles.terms}>
+            By signing up, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+      </div>
+    </>
   );
 };
 

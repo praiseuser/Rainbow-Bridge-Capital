@@ -1,266 +1,186 @@
 export const styles = {
-  pageContainer: {
+  page: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    py: { xs: 4, sm: 6 },
-    px: 2,
+    padding: "20px",
     position: "relative",
     overflow: "hidden",
   },
-
-  backgroundDecoration: {
+  bgEffect: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: "hidden",
+    inset: 0,
+    background: `
+      radial-gradient(circle at 20% 30%, rgba(236, 72, 153, 0.3), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(99, 102, 241, 0.3), transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.2), transparent 60%)
+    `,
+    animation: "breathe 20s ease-in-out infinite",
+  },
+  container: {
+    width: "100%",
+    maxWidth: "440px",
+    position: "relative",
+    zIndex: 1,
+    animation: "slideUp 0.8s ease-out",
+  },
+  logo: {
+    width: "70px",
+    height: "70px",
+    background: "rgba(255,255,255,0.2)",
+    backdropFilter: "blur(10px)",
+    borderRadius: "18px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 20px",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+  },
+  title: {
+    fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
+    fontWeight: "800",
+    color: "white",
+    textAlign: "center",
+    marginBottom: "8px",
+    textShadow: "0 2px 20px rgba(0,0,0,0.2)",
+  },
+  subtitle: {
+    color: "rgba(255,255,255,0.9)",
+    textAlign: "center",
+    marginBottom: "30px",
+    fontSize: "0.95rem",
+  },
+  card: {
+    background: "rgba(255,255,255,0.98)",
+    backdropFilter: "blur(20px)",
+    borderRadius: "24px",
+    padding: "40px",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+    border: "1px solid rgba(255,255,255,0.5)",
+  },
+  badge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "6px 14px",
+    background: "linear-gradient(135deg, #10b981, #059669)",
+    color: "white",
+    borderRadius: "20px",
+    fontSize: "0.8rem",
+    fontWeight: "700",
+    marginBottom: "25px",
+  },
+  inputGroup: {
+    marginBottom: "20px",
+  },
+  label: {
+    display: "block",
+    fontSize: "0.85rem",
+    fontWeight: "700",
+    color: "#1f2937",
+    marginBottom: "8px",
+  },
+  inputWrapper: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+  },
+  input: {
+    width: "100%",
+    padding: "14px 14px 14px 46px",
+    border: "2px solid #e5e7eb",
+    borderRadius: "12px",
+    fontSize: "0.95rem",
+    outline: "none",
+    transition: "all 0.3s ease",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+    background: "#f9fafb",
+  },
+  inputIcon: {
+    position: "absolute",
+    left: "14px",
+    color: "#6366f1",
     pointerEvents: "none",
   },
-
-  circle1: {
+  inputPassword: {
+    paddingRight: "46px",
+  },
+  eyeBtn: {
     position: "absolute",
-    top: -100,
-    right: -100,
-    width: 400,
-    height: 400,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-    animation: "float 20s ease-in-out infinite",
-    "@keyframes float": {
-      "0%, 100%": { transform: "translate(0, 0) scale(1)" },
-      "50%": { transform: "translate(-50px, 50px) scale(1.1)" },
-    },
+    right: "12px",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "6px",
+    display: "flex",
+    color: "#6b7280",
+    transition: "color 0.2s",
   },
-
-  circle2: {
-    position: "absolute",
-    bottom: -150,
-    left: -150,
-    width: 500,
-    height: 500,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)",
-    animation: "float 25s ease-in-out infinite reverse",
+  hint: {
+    fontSize: "0.75rem",
+    color: "#6b7280",
+    marginTop: "6px",
   },
-
-  circle3: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: 300,
-    height: 300,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)",
-    animation: "pulse 15s ease-in-out infinite",
-    "@keyframes pulse": {
-      "0%, 100%": { transform: "translate(-50%, -50%) scale(1)" },
-      "50%": { transform: "translate(-50%, -50%) scale(1.2)" },
-    },
-  },
-
-  contentWrapper: {
-    position: "relative",
-    zIndex: 2,
-  },
-
-  brandSection: {
-    textAlign: "center",
-    mb: 4,
-  },
-
-  logoWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: "20px",
-    background: "rgba(255, 255, 255, 0.2)",
-    backdropFilter: "blur(10px)",
+  button: {
+    width: "100%",
+    padding: "16px",
+    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+    color: "white",
+    border: "none",
+    borderRadius: "12px",
+    fontSize: "1rem",
+    fontWeight: "700",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    mx: "auto",
-    mb: 3,
-    boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-    animation: "bounce 2s ease-in-out infinite",
-    "@keyframes bounce": {
-      "0%, 100%": { transform: "translateY(0)" },
-      "50%": { transform: "translateY(-10px)" },
-    },
+    gap: "10px",
+    boxShadow: "0 8px 25px rgba(99, 102, 241, 0.4)",
+    marginTop: "25px",
+    marginBottom: "25px",
   },
-
-  brandTitle: {
-    color: "white",
-    fontWeight: 800,
-    mb: 1,
-    textShadow: "0 2px 10px rgba(0,0,0,0.1)",
-    fontSize: { xs: "1.75rem", sm: "2rem" },
-  },
-
-  brandSubtitle: {
-    color: "rgba(255, 255, 255, 0.9)",
-    fontSize: { xs: 14, sm: 16 },
-  },
-
-  signupCard: {
-    borderRadius: 4,
-    boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-    overflow: "hidden",
-    background: "white",
-  },
-
-  cardHeader: {
-    p: 3,
-    background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-    borderBottom: "2px solid #e2e8f0",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  cardTitle: {
-    fontWeight: 700,
-    color: "#1e293b",
-    fontSize: { xs: "1.25rem", sm: "1.5rem" },
-  },
-
-  freeBadge: {
-    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-    color: "white",
-    fontWeight: 700,
-    "& .MuiChip-icon": {
-      color: "white",
-    },
-  },
-
-  formContainer: {
-    p: { xs: 3, sm: 4 },
-  },
-
-  inputWrapper: {
-    mb: 3,
-  },
-
-  inputLabel: {
-    fontWeight: 700,
-    color: "#1e293b",
-    mb: 1,
-    fontSize: { xs: 13, sm: 14 },
-  },
-
-  textField: {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: 2,
-      backgroundColor: "#f8fafc",
-      border: "2px solid #e2e8f0",
-      transition: "all 0.3s ease",
-      "& fieldset": { border: "none" },
-      "&:hover": {
-        backgroundColor: "#f1f5f9",
-        border: "2px solid #cbd5e1",
-      },
-      "&.Mui-focused": {
-        backgroundColor: "white",
-        border: "2px solid #667eea",
-        boxShadow: "0 0 0 4px rgba(102, 126, 234, 0.1)",
-      },
-    },
-    "& input": {
-      color: "#1e293b",
-      fontSize: { xs: 14, sm: 15 },
-      py: 1.5,
-    },
-  },
-
-  inputIcon: {
-    color: "#667eea",
-    fontSize: 22,
-  },
-
-  visibilityButton: {
-    color: "#64748b",
-    "&:hover": {
-      color: "#667eea",
-    },
-  },
-
-  passwordHint: {
-    color: "#64748b",
-    mt: 0.5,
-    fontSize: { xs: 11, sm: 12 },
-  },
-
-  signupButton: {
-    py: { xs: 1.5, sm: 1.8 },
-    borderRadius: 2,
-    fontWeight: 700,
-    fontSize: { xs: 15, sm: 16 },
-    textTransform: "none",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    boxShadow: "0 8px 20px rgba(102, 126, 234, 0.4)",
-    transition: "all 0.3s ease",
-    mb: 3,
-    "&:hover": {
-      background: "linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)",
-      boxShadow: "0 12px 28px rgba(102, 126, 234, 0.5)",
-      transform: "translateY(-2px)",
-    },
-    "&:disabled": {
-      background: "#cbd5e1",
-    },
-  },
-
-  benefitsList: {
+  benefits: {
     display: "flex",
     flexDirection: "column",
-    gap: 1.5,
-    p: 2.5,
-    borderRadius: 2,
-    backgroundColor: "#f8fafc",
-    border: "2px solid #e2e8f0",
-    mb: 3,
+    gap: "12px",
+    padding: "20px",
+    background: "#f9fafb",
+    borderRadius: "12px",
+    marginBottom: "20px",
   },
-
-  benefitItem: {
+  benefit: {
     display: "flex",
     alignItems: "center",
-    gap: 1.5,
+    gap: "10px",
   },
-
   benefitIcon: {
     color: "#10b981",
-    fontSize: 20,
+    flexShrink: 0,
   },
-
   benefitText: {
-    color: "#475569",
-    fontWeight: 500,
-    fontSize: { xs: 13, sm: 14 },
+    fontSize: "0.85rem",
+    color: "#374151",
+    fontWeight: "500",
   },
-
-  loginLinkContainer: {
-    textAlign: "center",
-  },
-
-  loginText: {
-    color: "#64748b",
-    fontSize: { xs: 13, sm: 14 },
-  },
-
-  loginLink: {
-    color: "#667eea",
-    fontWeight: 700,
-    textDecoration: "none",
-  },
-
   footer: {
-    display: "block",
     textAlign: "center",
-    color: "rgba(255, 255, 255, 0.8)",
-    mt: 3,
-    fontSize: { xs: 11, sm: 12 },
+    fontSize: "0.85rem",
+    color: "#6b7280",
+  },
+  link: {
+    color: "#6366f1",
+    fontWeight: "700",
+    textDecoration: "none",
+    cursor: "pointer",
+  },
+  terms: {
+    textAlign: "center",
+    fontSize: "0.75rem",
+    color: "rgba(255,255,255,0.8)",
+    marginTop: "20px",
   },
 };
