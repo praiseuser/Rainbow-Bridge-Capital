@@ -3,42 +3,39 @@ import { useNavigate } from "react-router-dom";
 import supabase from "../../../supabase";
 
 const AuthCallback = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSessionFromUrl({
-          storeSession: true,
-        });
+    useEffect(() => {
+        const handleAuth = async () => {
+            try {
+                // Read session from URL
+                await supabase.auth.getSessionFromUrl({ storeSession: true });
 
-        if (error) {
-          console.error("Auth callback error:", error);
-          navigate("/login", { replace: true });
-          return;
-        }
+                // Get the current user (even if session is null)
+                const user = supabase.auth.getUser();
 
-        if (data?.session) {
-          // ✅ Verified, now go to onboarding
-          navigate("/onboarding", { replace: true });
-        } else {
-          navigate("/login", { replace: true });
-        }
-      } catch (err) {
-        console.error("Auth callback unexpected error:", err);
-        navigate("/login", { replace: true });
-      }
-    };
+                if (user) {
+                    // User exists, go to onboarding
+                    navigate("/onboarding", { replace: true });
+                } else {
+                    // No user, fallback to login
+                    navigate("/login", { replace: true });
+                }
+            } catch (err) {
+                console.error("Auth callback error:", err);
+                navigate("/login", { replace: true });
+            }
+        };
 
-    handleAuth();
-  }, [navigate]);
+        handleAuth();
+    }, [navigate]);
 
-  return (
-    <div style={{ padding: 40, textAlign: "center" }}>
-      <h2>Verifying your email…</h2>
-      <p>Please wait, finishing setup.</p>
-    </div>
-  );
+    return (
+        <div style={{ padding: 40, textAlign: "center" }}>
+            <h2>Verifying your email…</h2>
+            <p>Please wait, finishing setup.</p>
+        </div>
+    );
 };
 
 export default AuthCallback;
