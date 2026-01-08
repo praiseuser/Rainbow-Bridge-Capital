@@ -8,13 +8,6 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // Manually parse hash to avoid React Router removing it
-        const hash = window.location.hash;
-        if (!hash) {
-          navigate("/login", { replace: true });
-          return;
-        }
-
         const { data, error } = await supabase.auth.getSessionFromUrl({
           storeSession: true,
         });
@@ -26,6 +19,7 @@ const AuthCallback = () => {
         }
 
         if (data?.session) {
+          // ✅ Verified, now go to onboarding
           navigate("/onboarding", { replace: true });
         } else {
           navigate("/login", { replace: true });
