@@ -7,7 +7,15 @@ const AuthCallback = () => {
 
     useEffect(() => {
         const handleAuth = async () => {
-            const { data } = await supabase.auth.getSession();
+            const { data, error } = await supabase.auth.getSessionFromUrl({
+                storeSession: true,
+            });
+
+            if (error) {
+                console.error("Auth callback error:", error);
+                navigate("/login", { replace: true });
+                return;
+            }
 
             if (data?.session) {
                 navigate("/onboarding", { replace: true });
