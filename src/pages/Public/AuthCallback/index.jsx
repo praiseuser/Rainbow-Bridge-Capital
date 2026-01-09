@@ -1,62 +1,90 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, CircularProgress, Paper } from "@mui/material";
-import { CheckCircle } from "@mui/icons-material";
+import { CheckCircle, Error } from "@mui/icons-material";
 import supabase from "../../../supabase";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(true);
   const [verified, setVerified] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // Check for the hash parameters in the URL (token_type, access_token, etc.)
+        // Check for hash parameters
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
+        const errorDescription = hashParams.get('error_description');
         const type = hashParams.get('type');
 
-        // If it's an email verification
-        if (type === 'signup' && accessToken) {
-          // Set the session manually
-          const { error: sessionError } = await supabase.auth.setSession({
+        console.log('Auth callback params:', { type, hasAccessToken: !!accessToken, errorDescription });
+
+        // Check for errors first
+        if (errorDescription) {
+          console.error("Auth error:", errorDescription);
+          setError(errorDescription);
+          setVerifying(false);
+          setTimeout(() => navigate("/login", { replace: true }), 3000);
+          return;
+        }
+
+        // Check if we have tokens (for email verification or magic link)
+        if (accessToken && refreshToken) {
+          console.log('Setting session with tokens...');
+          
+          // Set the session
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
 
           if (sessionError) {
             console.error("Session error:", sessionError);
-            navigate("/login", { replace: true });
+            setError("Failed to set session");
+            setVerifying(false);
+            setTimeout(() => navigate("/login", { replace: true }), 3000);
             return;
           }
 
-          // Verify user is authenticated
+          console.log('Session set successfully:', sessionData);
+
+          // Get current user
           const { data: { user }, error: userError } = await supabase.auth.getUser();
 
           if (userError || !user) {
             console.error("User error:", userError);
-            navigate("/login", { replace: true });
+            setError("Failed to get user");
+            setVerifying(false);
+            setTimeout(() => navigate("/login", { replace: true }), 3000);
             return;
           }
 
-          // Show success animation
+          console.log('User verified:', user.email);
+
+          // Show success
           setVerifying(false);
           setVerified(true);
 
-          // Wait 2 seconds then navigate to onboarding
+          // Navigate to onboarding after 2 seconds
           setTimeout(() => {
             navigate("/onboarding", { replace: true });
           }, 2000);
 
         } else {
-          // No valid verification found, go to login
-          navigate("/login", { replace: true });
+          // No tokens found
+          console.log('No access token found in callback');
+          setError("No authentication data found");
+          setVerifying(false);
+          setTimeout(() => navigate("/login", { replace: true }), 3000);
         }
       } catch (err) {
         console.error("Auth callback error:", err);
-        navigate("/login", { replace: true });
+        setError(err.message || "Authentication failed");
+        setVerifying(false);
+        setTimeout(() => navigate("/login", { replace: true }), 3000);
       }
     };
 
@@ -98,6 +126,39 @@ const AuthCallback = () => {
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Please wait, finishing setup.
+            </Typography>
+          </>
+        ) : error ? (
+          <>
+            <Box
+              sx={{
+                width: 100,
+                height: 100,
+                margin: "0 auto",
+                mb: 3,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                animation: "scaleIn 0.5s ease-out",
+                "@keyframes scaleIn": {
+                  "0%": { transform: "scale(0)" },
+                  "50%": { transform: "scale(1.1)" },
+                  "100%": { transform: "scale(1)" },
+                },
+              }}
+            >
+              <Error sx={{ fontSize: 60, color: "white" }} />
+            </Box>
+            <Typography variant="h5" fontWeight={600} gutterBottom color="error">
+              Verification Failed
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {error}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Redirecting to login...
             </Typography>
           </>
         ) : verified ? (
