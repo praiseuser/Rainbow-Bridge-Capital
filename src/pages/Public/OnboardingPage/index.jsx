@@ -27,30 +27,28 @@ const OnboardingPage = () => {
      AUTH & ONBOARDED GUARD
   ====================== */
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       navigate("/login", { replace: true });
       return;
     }
 
-    if (!loading && user && !user.email_confirmed_at) {
-      navigate("/verify-email", { replace: true });
+    // If not onboarded → go to onboarding
+    if (!user.user_metadata?.onboarded) {
+      navigate("/onboarding", { replace: true });
       return;
     }
 
-    // NEW: If already onboarded → go straight to dashboard
-    if (!loading && user && user.user_metadata?.onboarded) {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
+    // Small delay to ensure metadata is fresh
+    const timer = setTimeout(() => {
+      if (!user.user_metadata?.onboarded) {
+        navigate("/onboarding", { replace: true });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [user, loading, navigate]);
-
-  if (loading || !user) {
-    return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center" }}>
-        <h3>Loading onboarding…</h3>
-      </div>
-    );
-  }
 
   /* =====================
      VALIDATION & STEP CONTROLS
@@ -104,32 +102,26 @@ const OnboardingPage = () => {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to save onboarding data", { id: loadingToast });
+        toast.error("Failed to save", { id: loadingToast });
         return;
       }
 
-      // Success toast with auto-close
-      toast.success("Onboarding complete! Redirecting...", {
+      toast.success("Complete! Welcome 🎉", {
         id: loadingToast,
-        duration: 2000,
+        duration: 1500,
       });
 
-      // Sign out
       await supabase.auth.signOut();
 
-      // Force dismiss any leftover toasts
+      // Triple cleanup
       toast.dismiss();
+      setTimeout(() => toast.dismiss(), 100);
 
-      // Redirect to login
-      setTimeout(() => {
-        navigate("/login", { replace: true });
-      }, 800);
+      navigate("/login", { replace: true });
     } catch (err) {
-      toast.error("Something went wrong", { id: loadingToast });
-      console.error("Unexpected error:", err);
+      toast.error("Error", { id: loadingToast });
     }
   };
-
   /* =====================
      IS FINISH READY?
   ====================== */
