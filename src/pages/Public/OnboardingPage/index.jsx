@@ -24,7 +24,7 @@ const OnboardingPage = () => {
   });
 
   /* =====================
-     BASIC AUTH GUARD
+     AUTH & ONBOARDED GUARD
   ====================== */
   useEffect(() => {
     if (!loading && !user) {
@@ -34,6 +34,13 @@ const OnboardingPage = () => {
 
     if (!loading && user && !user.email_confirmed_at) {
       navigate("/verify-email", { replace: true });
+      return;
+    }
+
+    // NEW: If already onboarded → go straight to dashboard
+    if (!loading && user && user.user_metadata?.onboarded) {
+      navigate("/dashboard", { replace: true });
+      return;
     }
   }, [user, loading, navigate]);
 
@@ -83,48 +90,43 @@ const OnboardingPage = () => {
   };
 
   /* =====================
-     FINISH ONBOARDING - FIXED
+     FINISH ONBOARDING - FIXED (no hanging toast)
   ====================== */
   const handleFinish = async () => {
-    console.log("🚀 Finish clicked - starting onboarding save");
-    console.log("Form data:", form);
-
     const loadingToast = toast.loading("Finalizing setup…");
 
     try {
-      console.log("📡 Calling supabase.auth.updateUser...");
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: {
           onboarded: true,
           onboarding_data: form,
         },
       });
 
-      console.log("✅ Supabase response:", { data, error });
-
       if (error) {
-        console.error("❌ Supabase error:", error);
         toast.error(error.message || "Failed to save onboarding data", { id: loadingToast });
         return;
       }
 
-      console.log("🎉 Onboarding saved successfully!");
-      toast.success("Onboarding complete! Redirecting...", { id: loadingToast });
+      // Success toast with auto-close
+      toast.success("Onboarding complete! Redirecting...", {
+        id: loadingToast,
+        duration: 2000,
+      });
 
-      console.log("🔓 Signing out...");
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        console.error("Sign out error:", signOutError);
-      }
+      // Sign out
+      await supabase.auth.signOut();
 
+      // Force dismiss any leftover toasts
+      toast.dismiss();
+
+      // Redirect to login
       setTimeout(() => {
-        console.log("➡️ Navigating to /login");
         navigate("/login", { replace: true });
-      }, 1500);
-
+      }, 800);
     } catch (err) {
-      console.error("💥 Unexpected error in handleFinish:", err);
-      toast.error("Something went wrong: " + (err.message || "Unknown error"), { id: loadingToast });
+      toast.error("Something went wrong", { id: loadingToast });
+      console.error("Unexpected error:", err);
     }
   };
 
