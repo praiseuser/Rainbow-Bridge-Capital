@@ -13,32 +13,37 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // v1: get session directly
-        const session = supabase.auth.session();
+        // v2: get session from URL after email verification
+        const { data, error: sessionError } = await supabase.auth.getSessionFromUrl({ storeSession: true });
 
-        if (!session || !session.user) {
-          // No active session — maybe verified just now, refresh
-          const { user, error: sessionError } = await supabase.auth.getUser();
-
-          if (sessionError || !user) {
-            setError("No session found. Please login again.");
-            setVerifying(false);
-            setTimeout(() => navigate("/login", { replace: true }), 3000);
-            return;
-          }
-
-          setVerified(true);
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setError(sessionError.message || "Session failed");
           setVerifying(false);
-          setTimeout(() => navigate("/onboarding", { replace: true }), 2000);
+          setTimeout(() => navigate("/login", { replace: true }), 3000);
           return;
         }
 
-        // Session exists ✅
+        const user = data?.session?.user;
+
+        if (!user) {
+          setError("No user found. Please login.");
+          setVerifying(false);
+          setTimeout(() => navigate("/login", { replace: true }), 3000);
+          return;
+        }
+
+        // Verified ✅
         setVerified(true);
         setVerifying(false);
-        setTimeout(() => navigate("/onboarding", { replace: true }), 2000);
+
+        // Navigate to onboarding after short delay
+        setTimeout(() => {
+          navigate("/onboarding", { replace: true });
+        }, 2000);
+
       } catch (err) {
-        console.error("Auth callback error:", err);
+        console.error("Auth callback unexpected error:", err);
         setError(err.message || "Authentication failed");
         setVerifying(false);
         setTimeout(() => navigate("/login", { replace: true }), 3000);
