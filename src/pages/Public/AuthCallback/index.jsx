@@ -31,7 +31,7 @@ const AuthCallback = () => {
           return;
         }
 
-        // Check if we have tokens (for email verification or magic link)
+        // Check if we have tokens
         if (accessToken && refreshToken) {
           console.log('Setting session with tokens...');
           
@@ -41,40 +41,51 @@ const AuthCallback = () => {
             refresh_token: refreshToken,
           });
 
+          console.log('Session response:', { sessionData, sessionError });
+
           if (sessionError) {
             console.error("Session error:", sessionError);
-            setError("Failed to set session");
+            setError("Failed to set session: " + sessionError.message);
             setVerifying(false);
             setTimeout(() => navigate("/login", { replace: true }), 3000);
             return;
           }
 
-          console.log('Session set successfully:', sessionData);
-
-          // Get current user
+          // Get current user to confirm
           const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+          console.log('User check:', { user, userError });
 
           if (userError || !user) {
             console.error("User error:", userError);
-            setError("Failed to get user");
+            setError("Failed to get user: " + (userError?.message || "Unknown error"));
             setVerifying(false);
             setTimeout(() => navigate("/login", { replace: true }), 3000);
             return;
           }
 
-          console.log('User verified:', user.email);
+          console.log('User verified successfully:', user.email);
+
+          // Check if user record exists in users table
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          console.log('Profile check:', { profile, profileError });
 
           // Show success
           setVerifying(false);
           setVerified(true);
 
-          // Navigate to onboarding after 2 seconds
+          // Wait 2 seconds then navigate
           setTimeout(() => {
+            console.log('Navigating to onboarding...');
             navigate("/onboarding", { replace: true });
           }, 2000);
 
         } else {
-          // No tokens found
           console.log('No access token found in callback');
           setError("No authentication data found");
           setVerifying(false);
