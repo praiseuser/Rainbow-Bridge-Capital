@@ -86,33 +86,45 @@ const OnboardingPage = () => {
      FINISH ONBOARDING - FIXED
   ====================== */
   const handleFinish = async () => {
+    console.log("🚀 Finish clicked - starting onboarding save");
+    console.log("Form data:", form);
+
     const loadingToast = toast.loading("Finalizing setup…");
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      console.log("📡 Calling supabase.auth.updateUser...");
+      const { data, error } = await supabase.auth.updateUser({
         data: {
           onboarded: true,
           onboarding_data: form,
         },
       });
 
+      console.log("✅ Supabase response:", { data, error });
+
       if (error) {
-        toast.error("Failed to save onboarding data", { id: loadingToast });
-        console.error("Onboarding save error:", error);
+        console.error("❌ Supabase error:", error);
+        toast.error(error.message || "Failed to save onboarding data", { id: loadingToast });
         return;
       }
 
+      console.log("🎉 Onboarding saved successfully!");
       toast.success("Onboarding complete! Redirecting...", { id: loadingToast });
 
-      // Force logout
-      await supabase.auth.signOut();
+      console.log("🔓 Signing out...");
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.error("Sign out error:", signOutError);
+      }
 
       setTimeout(() => {
+        console.log("➡️ Navigating to /login");
         navigate("/login", { replace: true });
       }, 1500);
+
     } catch (err) {
-      toast.error("Something went wrong", { id: loadingToast });
-      console.error("Unexpected error:", err);
+      console.error("💥 Unexpected error in handleFinish:", err);
+      toast.error("Something went wrong: " + (err.message || "Unknown error"), { id: loadingToast });
     }
   };
 
