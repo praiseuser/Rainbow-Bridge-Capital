@@ -46,13 +46,26 @@ const OnboardingPage = () => {
   }
 
   /* =====================
-     STEP CONTROLS
+     VALIDATION & STEP CONTROLS
   ====================== */
   const handleNext = () => {
     if (step === 1 && !form.supportsCommunity) {
       toast.error("Please make a selection");
       return;
     }
+    if (step === 4 && !form.investmentExperience) {
+      toast.error("Please select your experience level");
+      return;
+    }
+    if (step === 5 && !form.monthlyInvestment) {
+      toast.error("Please select your monthly investment range");
+      return;
+    }
+    if (step === 6 && form.goals.length === 0) {
+      toast.error("Please select at least one goal");
+      return;
+    }
+
     if (step < totalSteps) setStep(step + 1);
   };
 
@@ -70,34 +83,47 @@ const OnboardingPage = () => {
   };
 
   /* =====================
-     FINISH ONBOARDING
+     FINISH ONBOARDING - FIXED
   ====================== */
   const handleFinish = async () => {
-    toast.loading("Finalizing setup…");
+    const loadingToast = toast.loading("Finalizing setup…");
 
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        onboarded: true,
-        onboarding_data: form,
-      },
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          onboarded: true,
+          onboarding_data: form,
+        },
+      });
 
-    toast.dismiss();
+      if (error) {
+        toast.error("Failed to save onboarding data", { id: loadingToast });
+        console.error("Onboarding save error:", error);
+        return;
+      }
 
-    if (error) {
-      toast.error("Failed to save onboarding");
-      return;
+      toast.success("Onboarding complete! Redirecting...", { id: loadingToast });
+
+      // Force logout
+      await supabase.auth.signOut();
+
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 1500);
+    } catch (err) {
+      toast.error("Something went wrong", { id: loadingToast });
+      console.error("Unexpected error:", err);
     }
-
-    toast.success("Onboarding complete! Please login");
-
-    // 🔐 FORCE LOGOUT
-    await supabase.auth.signOut();
-
-    setTimeout(() => {
-      navigate("/login", { replace: true });
-    }, 1200);
   };
+
+  /* =====================
+     IS FINISH READY?
+  ====================== */
+  const isFinishReady =
+    form.supportsCommunity &&
+    form.investmentExperience &&
+    form.monthlyInvestment &&
+    form.goals.length > 0;
 
   const progress = (step / totalSteps) * 100;
 
@@ -137,12 +163,9 @@ const OnboardingPage = () => {
                 <button
                   style={{
                     ...styles.choiceBtn,
-                    ...(form.supportsCommunity === "yes" &&
-                      styles.choiceBtnActive),
+                    ...(form.supportsCommunity === "yes" && styles.choiceBtnActive),
                   }}
-                  onClick={() =>
-                    setForm({ ...form, supportsCommunity: "yes" })
-                  }
+                  onClick={() => setForm({ ...form, supportsCommunity: "yes" })}
                 >
                   <Check size={20} /> Yes
                 </button>
@@ -150,12 +173,9 @@ const OnboardingPage = () => {
                 <button
                   style={{
                     ...styles.choiceBtn,
-                    ...(form.supportsCommunity === "no" &&
-                      styles.choiceBtnActive),
+                    ...(form.supportsCommunity === "no" && styles.choiceBtnActive),
                   }}
-                  onClick={() =>
-                    setForm({ ...form, supportsCommunity: "no" })
-                  }
+                  onClick={() => setForm({ ...form, supportsCommunity: "no" })}
                 >
                   No
                 </button>
@@ -171,9 +191,7 @@ const OnboardingPage = () => {
               <input
                 style={styles.input}
                 value={form.hearAboutUs}
-                onChange={(e) =>
-                  setForm({ ...form, hearAboutUs: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, hearAboutUs: e.target.value })}
                 placeholder="Twitter, Instagram, Friend…"
               />
             </div>
@@ -187,9 +205,7 @@ const OnboardingPage = () => {
               <input
                 style={styles.input}
                 value={form.introducer}
-                onChange={(e) =>
-                  setForm({ ...form, introducer: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, introducer: e.target.value })}
                 placeholder="Optional"
               />
             </div>
@@ -207,12 +223,9 @@ const OnboardingPage = () => {
                     key={level}
                     style={{
                       ...styles.choiceBtn,
-                      ...(form.investmentExperience === level &&
-                        styles.choiceBtnActive),
+                      ...(form.investmentExperience === level && styles.choiceBtnActive),
                     }}
-                    onClick={() =>
-                      setForm({ ...form, investmentExperience: level })
-                    }
+                    onClick={() => setForm({ ...form, investmentExperience: level })}
                   >
                     {level}
                   </button>
@@ -228,23 +241,18 @@ const OnboardingPage = () => {
               <h2 style={styles.title}>Monthly Investment</h2>
 
               <div style={styles.buttonGroup}>
-                {["$0-$500", "$500-$2,000", "$2,000-$5,000", "$5,000+"].map(
-                  (amount) => (
-                    <button
-                      key={amount}
-                      style={{
-                        ...styles.choiceBtn,
-                        ...(form.monthlyInvestment === amount &&
-                          styles.choiceBtnActive),
-                      }}
-                      onClick={() =>
-                        setForm({ ...form, monthlyInvestment: amount })
-                      }
-                    >
-                      {amount}
-                    </button>
-                  )
-                )}
+                {["$0-$500", "$500-$2,000", "$2,000-$5,000", "$5,000+"].map((amount) => (
+                  <button
+                    key={amount}
+                    style={{
+                      ...styles.choiceBtn,
+                      ...(form.monthlyInvestment === amount && styles.choiceBtnActive),
+                    }}
+                    onClick={() => setForm({ ...form, monthlyInvestment: amount })}
+                  >
+                    {amount}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -280,20 +288,18 @@ const OnboardingPage = () => {
               <div style={styles.emoji}>🔔</div>
               <h2 style={styles.title}>Notifications</h2>
 
-              <label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <input
                   type="checkbox"
                   checked={form.notifications}
-                  onChange={(e) =>
-                    setForm({ ...form, notifications: e.target.checked })
-                  }
+                  onChange={(e) => setForm({ ...form, notifications: e.target.checked })}
                 />
-                Enable updates
+                Enable email & app updates
               </label>
             </div>
           )}
 
-          {/* NAV */}
+          {/* NAVIGATION */}
           <div style={styles.navButtons}>
             {step > 1 && (
               <button style={styles.backBtn} onClick={handleBack}>
@@ -306,7 +312,15 @@ const OnboardingPage = () => {
                 Next <ArrowRight size={20} />
               </button>
             ) : (
-              <button style={styles.finishBtn} onClick={handleFinish}>
+              <button
+                style={{
+                  ...styles.finishBtn,
+                  opacity: isFinishReady ? 1 : 0.5,
+                  cursor: isFinishReady ? "pointer" : "not-allowed",
+                }}
+                onClick={handleFinish}
+                disabled={!isFinishReady}
+              >
                 Complete Setup <Check size={20} />
               </button>
             )}
