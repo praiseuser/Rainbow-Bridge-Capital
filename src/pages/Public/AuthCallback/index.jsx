@@ -6,51 +6,61 @@ import supabase from "../../../supabase";
 
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const [verifying, setVerifying] = useState(true);
-  const [verified, setVerified] = useState(false);
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState("verifying"); // 'verifying' | 'success' | 'error'
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        // v2: get session from URL after email verification
-        const { data, error: sessionError } = await supabase.auth.getSessionFromUrl({ storeSession: true });
-
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          setError(sessionError.message || "Session failed");
-          setVerifying(false);
+    // Listen to auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.user?.email_confirmed_at || session?.user?.confirmed_at) {
+          setStatus("success");
+          setTimeout(() => {
+            navigate("/onboarding", { replace: true });
+          }, 2000);
+        } else {
+          setStatus("error");
+          setErrorMessage("Email not confirmed yet.");
           setTimeout(() => navigate("/login", { replace: true }), 3000);
-          return;
         }
+      } else if (event === "SIGN_IN_FAILED" || event === "USER_UPDATED") {
+        // Handle potential errors
+        setStatus("error");
+        setErrorMessage("Authentication failed.");
+        setTimeout(() => navigate("/login", { replace: true }), 3000);
+      }
+    });
 
-        const user = data?.session?.user;
+    // Optional: Try to get current session in case it's already processed
+    const checkSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Session error:", error);
+        setStatus("error");
+        setErrorMessage(error.message);
+        setTimeout(() => navigate("/login", { replace: true }), 3000);
+        return;
+      }
 
-        if (!user) {
-          setError("No user found. Please login.");
-          setVerifying(false);
-          setTimeout(() => navigate("/login", { replace: true }), 3000);
-          return;
-        }
-
-        // Verified ✅
-        setVerified(true);
-        setVerifying(false);
-
-        // Navigate to onboarding after short delay
-        setTimeout(() => {
-          navigate("/onboarding", { replace: true });
-        }, 2000);
-
-      } catch (err) {
-        console.error("Auth callback unexpected error:", err);
-        setError(err.message || "Authentication failed");
-        setVerifying(false);
+      if (data.session?.user?.email_confirmed_at) {
+        setStatus("success");
+        setTimeout(() => navigate("/onboarding", { replace: true }), 2000);
+      } else if (data.session) {
+        // Signed in but not confirmed
+        setStatus("error");
+        setErrorMessage("Please confirm your email.");
         setTimeout(() => navigate("/login", { replace: true }), 3000);
       }
     };
 
-    handleAuth();
+    checkSession();
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   return (
@@ -64,27 +74,46 @@ const AuthCallback = () => {
         p: 2,
       }}
     >
-      <Paper
-        elevation={24}
-        sx={{
-          borderRadius: 4,
-          p: 6,
-          textAlign: "center",
-          maxWidth: 400,
-          width: "100%",
-        }}
-      >
-        {verifying ? (
+      <Paper elevation={24} sx={{ borderRadius: 4, p: 6, textAlign: "center", maxWidth: 400, width: "100%" }}>
+        {status === "verifying" && (
           <>
             <CircularProgress size={80} sx={{ color: "#667eea", mb: 3 }} />
             <Typography variant="h5" fontWeight={600} gutterBottom>
               Verifying your email...
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Please wait, finishing setup.
+              Please wait while we confirm your account.
             </Typography>
           </>
-        ) : error ? (
+        )}
+
+        {status === "success" && (
+          <>
+            <Box
+              sx={{
+                width: 100,
+                height: 100,
+                margin: "0 auto",
+                mb: 3,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <CheckCircle sx={{ fontSize: 60, color: "white" }} />
+            </Box>
+            <Typography variant="h5" fontWeight={600} gutterBottom>
+              Email Verified Successfully!
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Redirecting to onboarding...
+            </Typography>
+          </>
+        )}
+
+        {status === "error" && (
           <>
             <Box
               sx={{
@@ -105,37 +134,13 @@ const AuthCallback = () => {
               Verification Failed
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {error}
+              {errorMessage || "Something went wrong."}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               Redirecting to login...
             </Typography>
           </>
-        ) : verified ? (
-          <>
-            <Box
-              sx={{
-                width: 100,
-                height: 100,
-                margin: "0 auto",
-                mb: 3,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CheckCircle sx={{ fontSize: 60, color: "white" }} />
-            </Box>
-            <Typography variant="h5" fontWeight={600} gutterBottom>
-              Email Verified!
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Redirecting you to onboarding...
-            </Typography>
-          </>
-        ) : null}
+        )}
       </Paper>
     </Box>
   );
