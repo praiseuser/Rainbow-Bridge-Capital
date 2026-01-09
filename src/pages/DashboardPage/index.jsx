@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext"; // adjust path if needed
 import DashboardHeader from "../../components/Dashboard/DashboardHeader";
 import DashboardSidebar from "../../components/Dashboard/DashboardSidebar";
 import Overview from "../../components/Dashboard/Overview/Overview";
@@ -15,8 +17,27 @@ import NotificationsPage from "../../components/Dashboard/Notifications";
 import SupportPage from "../../components/Dashboard/Support";
 
 const DashboardPage = () => {
+    const navigate = useNavigate();
+    const { user, loading } = useAuth();
+
     const [activeSection, setActiveSection] = useState("Overview");
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+    // Redirect logic: if not onboarded → go to onboarding
+    useEffect(() => {
+        if (loading) return;
+
+        if (!user) {
+            navigate("/login", { replace: true });
+            return;
+        }
+
+        // If user has not completed onboarding → redirect to onboarding
+        if (!user.user_metadata?.onboarded) {
+            navigate("/onboarding", { replace: true });
+            return;
+        }
+    }, [user, loading, navigate]);
 
     const renderSection = () => {
         switch (activeSection) {

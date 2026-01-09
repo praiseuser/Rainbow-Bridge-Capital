@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../components/ProtectedRoute";
 import AdminRoute from "../components/AdminRoute";
 import LandingPage from "../pages/LandingPage";
@@ -25,6 +25,7 @@ const AppRoutes = () => {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
+      {/* Onboarding - allow access even if not fully onboarded */}
       <Route
         path="/onboarding"
         element={
@@ -34,8 +35,9 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Dashboard - normal protection (will be checked inside DashboardPage) */}
       <Route
-        path="/dashboard"
+        path="/dashboard/*"
         element={
           <ProtectedRoute>
             <DashboardPage />
@@ -51,7 +53,6 @@ const AppRoutes = () => {
           </AdminRoute>
         }
       />
-
     </Routes>
   );
 };
