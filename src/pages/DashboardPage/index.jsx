@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/AuthContext"; // adjust path if needed
+import { useAuth } from "../../context/AuthContext";
 import DashboardHeader from "../../components/Dashboard/DashboardHeader";
 import DashboardSidebar from "../../components/Dashboard/DashboardSidebar";
 import Overview from "../../components/Dashboard/Overview/Overview";
