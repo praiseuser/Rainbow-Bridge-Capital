@@ -1,9 +1,8 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const ProtectedRoute = ({ children }) => {
-  const { user, profile, loading } = useAuth();
-  const location = useLocation();
+const ProtectedRoute = ({ children, skipOnboardingCheck = false }) => {
+  const { user, loading, profile } = useAuth();
 
   if (loading) return null;
 
@@ -11,8 +10,8 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If user hasn't completed onboarding and not already on onboarding page
-  if (profile && !profile.onboarding_completed && location.pathname !== "/onboarding") {
+  // If user hasn't completed onboarding and we're not on the onboarding page
+  if (!skipOnboardingCheck && profile && !profile.onboarding_completed) {
     return <Navigate to="/onboarding" replace />;
   }
 

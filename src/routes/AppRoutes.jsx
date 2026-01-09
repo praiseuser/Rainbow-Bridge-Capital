@@ -25,11 +25,10 @@ const AppRoutes = () => {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
 
-
       <Route
         path="/onboarding"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute skipOnboardingCheck={true}>
             <OnboardingPage />
           </ProtectedRoute>
         }
