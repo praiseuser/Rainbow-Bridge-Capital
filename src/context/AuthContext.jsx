@@ -9,6 +9,10 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const fetchProfile = async (userId) => {
+        if (!userId) {
+            setProfile(null);
+            return;
+        }
         try {
             const { data, error } = await supabase
                 .from("users")
@@ -25,26 +29,26 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        // Check initial session
-        supabase.auth.getSession().then(async ({ data }) => {
+        // Get initial session
+        const getInitialSession = async () => {
+            const { data } = await supabase.auth.getSession();
             const currentUser = data?.session?.user ?? null;
             setUser(currentUser);
-            
-            if (currentUser) {
-                await fetchProfile(currentUser.id);
-            }
-            
+            await fetchProfile(currentUser?.id);
             setLoading(false);
-        });
+        };
 
-        // Listen for auth state changes
+        getInitialSession();
+
+        // Listen to auth changes - NO ASYNC/AWAIT INSIDE!
         const { data: authListener } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
+            (event, session) => {
                 const currentUser = session?.user ?? null;
                 setUser(currentUser);
-                
+
+                // Only fetch profile if user exists, do it outside the listener
                 if (currentUser) {
-                    await fetchProfile(currentUser.id);
+                    fetchProfile(currentUser.id);
                 } else {
                     setProfile(null);
                 }
@@ -52,9 +56,18 @@ export const AuthProvider = ({ children }) => {
         );
 
         return () => {
-            authListener.subscription.unsubscribe();
+            authListener?.subscription?.unsubscribe();
         };
     }, []);
+
+    // Optional: Refetch profile when user changes (safe because it's outside listener)
+    useEffect(() => {
+        if (user) {
+            fetchProfile(user.id);
+        } else {
+            setProfile(null);
+        }
+    }, [user?.id]);
 
     return (
         <AuthContext.Provider value={{ user, profile, loading }}>
