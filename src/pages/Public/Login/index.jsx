@@ -35,6 +35,7 @@ const LoginPage = () => {
 
             if (error) throw error;
 
+            // Check if user is blocked
             const blockCheck = await checkUserBlocked(data.user.id);
 
             if (blockCheck.blocked) {
@@ -44,14 +45,22 @@ const LoginPage = () => {
                 return;
             }
 
-            const role = data.user.user_metadata?.role;
+            // Refresh user to ensure latest metadata (important for onboarded flag)
+            const { data: { user: freshUser } } = await supabase.auth.getUser();
+
+            const role = freshUser?.user_metadata?.role;
+            const onboarded = freshUser?.user_metadata?.onboarded;
+
             toast.success("Welcome back!");
 
             if (role === "admin") {
-                navigate("/admin");
+                navigate("/admin", { replace: true });
+            } else if (onboarded) {
+                navigate("/dashboard", { replace: true });
             } else {
-                navigate("/dashboard");
+                navigate("/onboarding", { replace: true });
             }
+
         } catch (err) {
             console.error("Login error:", err);
             toast.error(err.message || "Login failed");
