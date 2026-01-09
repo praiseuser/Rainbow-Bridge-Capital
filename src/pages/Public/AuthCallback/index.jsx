@@ -13,39 +13,32 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // v1: get session from URL using 'supabase.auth.signIn' with provider callback
-        const { user, session, error: signInError } = await supabase.auth.signIn(
-          { provider: null }, // null because we’re using email/password signup
-          { redirectTo: window.location.origin + "/auth/callback" }
-        );
+        // v1: get session directly
+        const session = supabase.auth.session();
 
-        if (signInError) {
-          console.error("SignIn error:", signInError);
-          setError(signInError.message);
+        if (!session || !session.user) {
+          // No active session — maybe verified just now, refresh
+          const { user, error: sessionError } = await supabase.auth.getUser();
+
+          if (sessionError || !user) {
+            setError("No session found. Please login again.");
+            setVerifying(false);
+            setTimeout(() => navigate("/login", { replace: true }), 3000);
+            return;
+          }
+
+          setVerified(true);
           setVerifying(false);
-          setTimeout(() => navigate("/login", { replace: true }), 3000);
-          return;
-        }
-
-        // Check if session exists
-        const currentSession = supabase.auth.session();
-
-        if (!currentSession || !currentSession.user) {
-          setError("No valid session found");
-          setVerifying(false);
-          setTimeout(() => navigate("/login", { replace: true }), 3000);
+          setTimeout(() => navigate("/onboarding", { replace: true }), 2000);
           return;
         }
 
         // Session exists ✅
-        setVerifying(false);
         setVerified(true);
-
-        setTimeout(() => {
-          navigate("/onboarding", { replace: true });
-        }, 2000);
+        setVerifying(false);
+        setTimeout(() => navigate("/onboarding", { replace: true }), 2000);
       } catch (err) {
-        console.error("Auth callback unexpected error:", err);
+        console.error("Auth callback error:", err);
         setError(err.message || "Authentication failed");
         setVerifying(false);
         setTimeout(() => navigate("/login", { replace: true }), 3000);
@@ -78,13 +71,7 @@ const AuthCallback = () => {
       >
         {verifying ? (
           <>
-            <CircularProgress
-              size={80}
-              sx={{
-                color: "#667eea",
-                mb: 3,
-              }}
-            />
+            <CircularProgress size={80} sx={{ color: "#667eea", mb: 3 }} />
             <Typography variant="h5" fontWeight={600} gutterBottom>
               Verifying your email...
             </Typography>
