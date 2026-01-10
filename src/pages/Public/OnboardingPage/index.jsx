@@ -94,6 +94,14 @@ const OnboardingPage = () => {
     const loadingToast = toast.loading("Finalizing setup…");
 
     try {
+      // Get current user ID
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser) {
+        toast.error("User not found", { id: loadingToast });
+        return;
+      }
+
       // 1. Update user metadata
       const { error: metaError } = await supabase.auth.updateUser({
         data: {
@@ -103,7 +111,7 @@ const OnboardingPage = () => {
       });
 
       if (metaError) {
-        toast.error("Failed to save", { id: loadingToast });
+        toast.error("Failed to save metadata", { id: loadingToast });
         return;
       }
 
@@ -111,10 +119,11 @@ const OnboardingPage = () => {
       const { error: dbError } = await supabase
         .from("users")
         .update({ onboarding_completed: true })
-        .eq("id", user.id);
+        .eq("id", currentUser.id);
 
       if (dbError) {
-        toast.error("Failed to save", { id: loadingToast });
+        console.error("DB Error:", dbError);
+        toast.error("Failed to update profile", { id: loadingToast });
         return;
       }
 
@@ -129,7 +138,8 @@ const OnboardingPage = () => {
 
       navigate("/login", { replace: true });
     } catch (err) {
-      toast.error("Error", { id: loadingToast });
+      console.error("Onboarding error:", err);
+      toast.error("Error completing setup", { id: loadingToast });
     }
   };
   /* =====================
