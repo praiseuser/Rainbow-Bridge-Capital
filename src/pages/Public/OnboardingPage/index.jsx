@@ -94,14 +94,26 @@ const OnboardingPage = () => {
     const loadingToast = toast.loading("Finalizing setup…");
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      // 1. Update user metadata
+      const { error: metaError } = await supabase.auth.updateUser({
         data: {
           onboarded: true,
           onboarding_data: form,
         },
       });
 
-      if (error) {
+      if (metaError) {
+        toast.error("Failed to save", { id: loadingToast });
+        return;
+      }
+
+      // 2. Update users table
+      const { error: dbError } = await supabase
+        .from("users")
+        .update({ onboarding_completed: true })
+        .eq("id", user.id);
+
+      if (dbError) {
         toast.error("Failed to save", { id: loadingToast });
         return;
       }
@@ -112,8 +124,6 @@ const OnboardingPage = () => {
       });
 
       await supabase.auth.signOut();
-
-      // Triple cleanup
       toast.dismiss();
       setTimeout(() => toast.dismiss(), 100);
 
