@@ -23,19 +23,11 @@ const DashboardPage = () => {
     const [activeSection, setActiveSection] = useState("Overview");
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-    // Redirect logic: if not onboarded → go to onboarding
     useEffect(() => {
         if (loading) return;
 
         if (!user) {
             navigate("/login", { replace: true });
-            return;
-        }
-
-        // If user has not completed onboarding → redirect to onboarding
-        if (!user.user_metadata?.onboarded) {
-            navigate("/onboarding", { replace: true });
-            return;
         }
     }, [user, loading, navigate]);
 

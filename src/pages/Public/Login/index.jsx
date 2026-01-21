@@ -45,20 +45,15 @@ const LoginPage = () => {
                 return;
             }
 
-            // Refresh user to ensure latest metadata (important for onboarded flag)
             const { data: { user: freshUser } } = await supabase.auth.getUser();
-
             const role = freshUser?.user_metadata?.role;
-            const onboarded = freshUser?.user_metadata?.onboarded;
 
             toast.success("Welcome back!");
 
             if (role === "admin") {
                 navigate("/admin", { replace: true });
-            } else if (onboarded) {
-                navigate("/dashboard", { replace: true });
             } else {
-                navigate("/onboarding", { replace: true });
+                navigate("/dashboard", { replace: true }); // Just go to dashboard
             }
 
         } catch (err) {
@@ -68,7 +63,6 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
-
     const handleKeyPress = (e) => {
         if (e.key === "Enter") handleLogin();
     };
