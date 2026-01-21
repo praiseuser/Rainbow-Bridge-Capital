@@ -1,23 +1,16 @@
 import React from "react";
 import { Box, List, ListItem, ListItemButton, ListItemText, ListItemIcon } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import ShowChartIcon from "@mui/icons-material/ShowChart";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PeopleIcon from "@mui/icons-material/People";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import SupportIcon from "@mui/icons-material/Support";
 
 const sections = [
   { name: "Overview", icon: <DashboardIcon /> },
-  { name: "Investment", icon: <ShowChartIcon /> },
-  { name: "My Investment", icon: <ShowChartIcon /> },
-  { name: "Wallet", icon: <AccountBalanceWalletIcon /> },
-  { name: "Withdraw", icon: <AttachMoneyIcon /> },
-  { name: "Loan", icon: <AttachMoneyIcon /> },
   { name: "Community", icon: <PeopleIcon /> },
-  { name: "Notifications", icon: <AttachMoneyIcon /> },
-  { name: "Transactions", icon: <AttachMoneyIcon /> },
   { name: "Profile", icon: <PeopleIcon /> },
-  { name: "Support", icon: <PeopleIcon /> },
+  { name: "Notifications", icon: <NotificationsIcon /> },
+  { name: "Support", icon: <SupportIcon /> },
 ];
 
 const DashboardSidebar = ({ activeSection, setActiveSection, isMobileOpen, toggleMobile }) => {
@@ -65,7 +58,9 @@ const DashboardSidebar = ({ activeSection, setActiveSection, isMobileOpen, toggl
                 py: 2,
               }}
             >
-              <ListItemIcon sx={{ color: activeSection === section.name ? "#ffd700" : "#d0d7ff", minWidth: 35 }}>
+              <ListItemIcon
+                sx={{ color: activeSection === section.name ? "#ffd700" : "#d0d7ff", minWidth: 35 }}
+              >
                 {section.icon}
               </ListItemIcon>
               <ListItemText

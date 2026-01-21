@@ -29,7 +29,6 @@ const VerifyStatusPage = () => {
 
       setStatus(verification.status);
 
-      // ✅ AUTO REDIRECT WHEN APPROVED
       if (verification.status === "approved") {
         setTimeout(() => {
           navigate("/dashboard", { replace: true });
