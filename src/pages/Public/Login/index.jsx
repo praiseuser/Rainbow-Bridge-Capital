@@ -28,16 +28,18 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
+            // 1️⃣ Login
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
-                password
+                password,
             });
 
             if (error) throw error;
 
-            // Check if user is blocked
-            const blockCheck = await checkUserBlocked(data.user.id);
+            const userId = data.user.id;
 
+            // 2️⃣ Check if user is blocked
+            const blockCheck = await checkUserBlocked(userId);
             if (blockCheck.blocked) {
                 toast.error(blockCheck.message, { duration: 5000 });
                 await supabase.auth.signOut();
@@ -45,15 +47,22 @@ const LoginPage = () => {
                 return;
             }
 
-            const { data: { user: freshUser } } = await supabase.auth.getUser();
-            const role = freshUser?.user_metadata?.role;
+            // 3️⃣ FETCH ROLE FROM profiles TABLE (🔥 FIX 🔥)
+            const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("user_id", userId)
+                .single();
+
+            if (profileError) throw profileError;
 
             toast.success("Welcome back!");
 
-            if (role === "admin") {
+            // 4️⃣ Redirect based on DB role
+            if (profile?.role === "admin") {
                 navigate("/admin", { replace: true });
             } else {
-                navigate("/dashboard", { replace: true }); // Just go to dashboard
+                navigate("/dashboard", { replace: true });
             }
 
         } catch (err) {
@@ -63,6 +72,7 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
+
     const handleKeyPress = (e) => {
         if (e.key === "Enter") handleLogin();
     };
