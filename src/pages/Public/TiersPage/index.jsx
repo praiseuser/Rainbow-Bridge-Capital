@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Card, CardContent, Typography, Button, Grid } from "@mui/material";
-import supabase from "../../supabase";
-import { useAuth } from "../../context/AuthContext";
+import supabase from "../../../supabase";
+import { useAuth } from "../../../context/AuthContext";
 
 const tiers = [
     {
@@ -81,7 +81,7 @@ const TierPage = () => {
                                 >
                                     Select Tier {item.tier}
                                 </Button>
-                            </CardContent>
+                            </CardContent>  
                         </Card>
                     </Grid>
                 ))}
