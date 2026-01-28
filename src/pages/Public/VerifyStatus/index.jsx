@@ -1,54 +1,50 @@
 import React, { useEffect, useState } from "react";
 import supabase from "../../../supabase";
 import { useAuth } from "../../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 const VerifyStatusPage = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [verification, setVerification] = useState(null);
 
-  const fetchStatus = async () => {
-    if (!user) return;
-    try {
+  useEffect(() => {
+    const fetchVerification = async () => {
       const { data, error } = await supabase
         .from("verification")
-        .select("status")
+        .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .single();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) return console.error(error);
 
-      setStatus(data?.status || null);
+      // Get public URLs
+      const getPublicUrl = (path) => path ? supabase.storage.from("verifications").getPublicUrl(path).data.publicUrl : null;
 
-      if (data?.status === "approved") {
-        navigate("/dashboard"); // redirect when approved
-      } else if (data?.status === "rejected") {
-        navigate("/verify"); // redirect back to form if rejected
-      }
-    } catch (err) {
-      console.error("Error fetching verification status:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setVerification({
+        ...data,
+        selfie_url: getPublicUrl(data.selfie_path),
+        id_url: getPublicUrl(data.id_path),
+        fullbody_url: getPublicUrl(data.fullbody_path),
+      });
+    };
 
-  useEffect(() => {
-    fetchStatus(); // initial check
+    fetchVerification();
+  }, [user.id]);
 
-    const interval = setInterval(() => {
-      fetchStatus(); // check every 3 seconds
-    }, 3000);
+  if (!verification) return <p>Loading verification...</p>;
 
-    return () => clearInterval(interval); // cleanup
-  }, [user]);
+  return (
+    <div>
+      <h2>Verification Status: {verification.status}</h2>
 
-  if (loading) return <div>Checking verification status...</div>;
-
-  return <div>Your verification is {status || "pending"}...</div>;
+      <div>
+        {verification.selfie_url && <img src={verification.selfie_url} alt="Selfie" width={150} />}
+        {verification.id_url && <img src={verification.id_url} alt="ID Document" width={150} />}
+        {verification.fullbody_url && <img src={verification.fullbody_url} alt="Full Body" width={150} />}
+      </div>
+    </div>
+  );
 };
 
 export default VerifyStatusPage;
