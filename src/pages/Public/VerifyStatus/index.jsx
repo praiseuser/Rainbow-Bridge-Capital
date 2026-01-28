@@ -1,58 +1,54 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import supabase from "../../../supabase";
+import { useAuth } from "../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const VerifyStatusPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("loading");
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStatus = async () => {
-      const { data: authData } = await supabase.auth.getUser();
-      const userId = authData?.user?.id;
-
-      if (!userId) {
-        navigate("/login");
-        return;
-      }
-
-      const { data: verification, error } = await supabase
+  const fetchStatus = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
         .from("verification")
         .select("status")
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .single();
 
-      if (error) {
-        console.error(error);
-        return;
+      if (error && error.code !== "PGRST116") throw error;
+
+      setStatus(data?.status || null);
+
+      if (data?.status === "approved") {
+        navigate("/dashboard"); // redirect when approved
+      } else if (data?.status === "rejected") {
+        navigate("/verify"); // redirect back to form if rejected
       }
+    } catch (err) {
+      console.error("Error fetching verification status:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      setStatus(verification.status);
+  useEffect(() => {
+    fetchStatus(); // initial check
 
-      if (verification.status === "approved") {
-        setTimeout(() => {
-          navigate("/dashboard", { replace: true });
-        }, 1500);
-      }
-    };
+    const interval = setInterval(() => {
+      fetchStatus(); // check every 3 seconds
+    }, 3000);
 
-    fetchStatus();
-  }, [navigate]);
+    return () => clearInterval(interval); // cleanup
+  }, [user]);
 
-  return (
-    <div style={{ padding: 50, textAlign: "center" }}>
-      <h1>Verification Status</h1>
+  if (loading) return <div>Checking verification status...</div>;
 
-      {status === "loading" && <p>Checking status...</p>}
-      {status === "pending" && <p>Your documents are under review.</p>}
-      {status === "approved" && (
-        <p>Congratulations! Your account is verified ✅</p>
-      )}
-      {status === "rejected" && (
-        <p>Verification rejected. Please resubmit your documents.</p>
-      )}
-    </div>
-  );
+  return <div>Your verification is {status || "pending"}...</div>;
 };
 
 export default VerifyStatusPage;
