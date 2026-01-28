@@ -6,32 +6,46 @@ const AdminVerificationPage = () => {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch all verification submissions
     const fetchSubmissions = async () => {
         setLoading(true);
         try {
+            // 1️⃣ Fetch all verification rows
             const { data, error } = await supabase
                 .from("verification")
-                .select(`
-          id,
-          user_id,
-          status,
-          selfie_path,
-          id_path,
-          fullbody_path,
-          profiles(email)
-        `)
+                .select("*") // no join yet, we'll fetch users separately
                 .order("created_at", { ascending: false });
 
             if (error) throw error;
 
-            // Map paths to public URLs
-            const submissionsWithUrls = data.map((sub) => ({
-                ...sub,
-                selfie_url: sub.selfie_path ? supabase.storage.from("verifications").getPublicUrl(sub.selfie_path).data.publicUrl : null,
-                id_url: sub.id_path ? supabase.storage.from("verifications").getPublicUrl(sub.id_path).data.publicUrl : null,
-                fullbody_url: sub.fullbody_path ? supabase.storage.from("verifications").getPublicUrl(sub.fullbody_path).data.publicUrl : null,
-            }));
+            // 2️⃣ Map each submission to include public URLs for images
+            const submissionsWithUrls = await Promise.all(
+                data.map(async (sub) => {
+                    const selfie_url = sub.selfie_path
+                        ? supabase.storage.from("verifications").getPublicUrl(sub.selfie_path).data.publicUrl
+                        : null;
+                    const id_url = sub.id_path
+                        ? supabase.storage.from("verifications").getPublicUrl(sub.id_path).data.publicUrl
+                        : null;
+                    const fullbody_url = sub.fullbody_path
+                        ? supabase.storage.from("verifications").getPublicUrl(sub.fullbody_path).data.publicUrl
+                        : null;
+
+                    // 3️⃣ Fetch user email & name from profiles
+                    const { data: profileData } = await supabase
+                        .from("profiles")
+                        .select("full_name, email")
+                        .eq("user_id", sub.user_id)
+                        .single();
+
+                    return {
+                        ...sub,
+                        selfie_url,
+                        id_url,
+                        fullbody_url,
+                        profile: profileData || { full_name: "Unknown", email: "N/A" },
+                    };
+                })
+            );
 
             setSubmissions(submissionsWithUrls);
         } catch (err) {
@@ -41,24 +55,20 @@ const AdminVerificationPage = () => {
         }
     };
 
-    useEffect(() => {
-        fetchSubmissions();
-    }, []);
-
-    // Approve / Reject handler
     const handleUpdateStatus = async (id, status) => {
         try {
-            const { error } = await supabase
-                .from("verification")
-                .update({ status })
-                .eq("id", id);
-
+            const { error } = await supabase.from("verification").update({ status }).eq("id", id);
             if (error) throw error;
-            fetchSubmissions(); // refresh list
+
+            fetchSubmissions(); // Refresh after update
         } catch (err) {
             console.error("Error updating status:", err);
         }
     };
+
+    useEffect(() => {
+        fetchSubmissions();
+    }, []);
 
     return (
         <Box sx={{ minHeight: "100vh", backgroundColor: "#0a1f44", p: 3 }}>
@@ -78,7 +88,10 @@ const AdminVerificationPage = () => {
                                 <Card sx={{ backgroundColor: "#1f2a38" }}>
                                     <CardContent>
                                         <Typography variant="h6" sx={{ color: "#fff" }}>
-                                            {sub.profiles?.email || "Unknown User"}
+                                            {sub.profile.full_name}
+                                        </Typography>
+                                        <Typography sx={{ color: "#ccc", mb: 2 }}>
+                                            Email: {sub.profile.email}
                                         </Typography>
                                         <Typography sx={{ color: "#ccc", mb: 2 }}>
                                             Status: {sub.status}
@@ -86,7 +99,7 @@ const AdminVerificationPage = () => {
 
                                         <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
                                             {sub.selfie_url && <img src={sub.selfie_url} alt="Selfie" width={100} />}
-                                            {sub.id_url && <img src={sub.id_url} alt="ID Document" width={100} />}
+                                            {sub.id_url && <img src={sub.id_url} alt="ID" width={100} />}
                                             {sub.fullbody_url && <img src={sub.fullbody_url} alt="Full Body" width={100} />}
                                         </Box>
 
