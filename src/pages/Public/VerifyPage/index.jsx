@@ -1,14 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import supabase from "../../../supabase";
 import toast from "react-hot-toast";
 import { useAuth } from "../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const VerifyPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selfie, setSelfie] = useState(null);
   const [idDoc, setIdDoc] = useState(null);
   const [fullBody, setFullBody] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
+
+  // Check verification status
+  const fetchVerificationStatus = async () => {
+    if (!user) return;
+    setStatusLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("verification")
+        .select("status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error; // ignore no rows
+
+      if (data?.status === "approved") {
+        navigate("/dashboard"); // already approved → go to dashboard
+      } else if (data?.status === "pending") {
+        navigate("/verify/status"); // pending → go to status page
+      }
+    } catch (err) {
+      console.error("Error fetching verification status:", err);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVerificationStatus();
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!selfie || !idDoc || !fullBody) {
@@ -17,23 +51,17 @@ const VerifyPage = () => {
 
     setLoading(true);
     try {
-      const bucket = "verifications"; // your Supabase bucket name
-
-      // Helper to upload file and get path
-      const uploadFile = async (file) => {
-        const fileName = `${user.id}_${file.name}`;
-        const { error } = await supabase.storage.from(bucket).upload(fileName, file, {
-          upsert: true,
-        });
+      const uploadFile = async (file, folder) => {
+        const filePath = `${folder}/${user.id}_${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage.from("verifications").upload(filePath, file, { upsert: true });
         if (error) throw error;
-        return fileName; // return the path
+        return filePath;
       };
 
-      const selfiePath = await uploadFile(selfie);
-      const idPath = await uploadFile(idDoc);
-      const fullBodyPath = await uploadFile(fullBody);
+      const selfiePath = await uploadFile(selfie, "selfies");
+      const idPath = await uploadFile(idDoc, "ids");
+      const fullBodyPath = await uploadFile(fullBody, "fullbody");
 
-      // Insert verification record
       const { error } = await supabase.from("verification").insert([
         {
           user_id: user.id,
@@ -47,6 +75,7 @@ const VerifyPage = () => {
       if (error) throw error;
 
       toast.success("Verification submitted successfully!");
+      fetchVerificationStatus(); // check immediately and redirect
     } catch (err) {
       console.error(err);
       toast.error("Failed to submit verification");
@@ -54,6 +83,8 @@ const VerifyPage = () => {
       setLoading(false);
     }
   };
+
+  if (statusLoading) return <div>Loading...</div>;
 
   return (
     <div>

@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Box, Container, Typography, Grid, Card, CardContent, Button, Dialog } from "@mui/material";
+import { Box, Container, Typography, Grid, Card, CardContent, Button } from "@mui/material";
 import supabase from "../../../supabase";
 
 const AdminVerificationPage = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openImage, setOpenImage] = useState(null); // URL of image to show in dialog
 
-  // Fetch all verification submissions
   const fetchSubmissions = async () => {
     setLoading(true);
     try {
+      // Fetch verification records
       const { data, error } = await supabase
         .from("verification")
         .select(`
@@ -19,13 +18,37 @@ const AdminVerificationPage = () => {
           status,
           selfie_path,
           id_path,
-          fullbody_path,
-          profiles(email)
+          fullbody_path
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setSubmissions(data || []);
+
+      // Get user info for each submission
+      const submissionsWithUser = await Promise.all(
+        data.map(async (sub) => {
+          // Fetch profile
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, email")
+            .eq("user_id", sub.user_id)
+            .single();
+
+          // Generate public URLs for files
+          const getPublicUrl = (path) =>
+            path ? supabase.storage.from("verifications").getPublicUrl(path).data.publicUrl : null;
+
+          return {
+            ...sub,
+            profile,
+            selfie_url: getPublicUrl(sub.selfie_path),
+            id_url: getPublicUrl(sub.id_path),
+            fullbody_url: getPublicUrl(sub.fullbody_path),
+          };
+        })
+      );
+
+      setSubmissions(submissionsWithUser);
     } catch (err) {
       console.error("Error fetching submissions:", err);
     } finally {
@@ -37,7 +60,6 @@ const AdminVerificationPage = () => {
     fetchSubmissions();
   }, []);
 
-  // Approve / Reject handler
   const handleUpdateStatus = async (id, status) => {
     try {
       const { error } = await supabase
@@ -50,13 +72,6 @@ const AdminVerificationPage = () => {
     } catch (err) {
       console.error("Error updating status:", err);
     }
-  };
-
-  // Helper to get public URL from Supabase storage
-  const getPublicUrl = (path) => {
-    if (!path) return null;
-    const { data } = supabase.storage.from("verifications").getPublicUrl(path);
-    return data.publicUrl;
   };
 
   return (
@@ -77,39 +92,22 @@ const AdminVerificationPage = () => {
                 <Card sx={{ backgroundColor: "#1f2a38" }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ color: "#fff" }}>
-                      {sub.profiles?.email || "Unknown User"}
+                      {sub.profile?.full_name || "Unknown User"}
+                    </Typography>
+                    <Typography sx={{ color: "#ccc", mb: 1 }}>
+                      Email: {sub.profile?.email || "N/A"}
                     </Typography>
                     <Typography sx={{ color: "#ccc", mb: 2 }}>
                       Status: {sub.status}
                     </Typography>
 
                     <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
-                      {sub.selfie_path && (
-                        <img
-                          src={getPublicUrl(sub.selfie_path)}
-                          alt="Selfie"
-                          width={100}
-                          style={{ cursor: "pointer", borderRadius: 4 }}
-                          onClick={() => setOpenImage(getPublicUrl(sub.selfie_path))}
-                        />
+                      {sub.selfie_url && (
+                        <img src={sub.selfie_url} alt="Selfie" width={100} />
                       )}
-                      {sub.id_path && (
-                        <img
-                          src={getPublicUrl(sub.id_path)}
-                          alt="ID"
-                          width={100}
-                          style={{ cursor: "pointer", borderRadius: 4 }}
-                          onClick={() => setOpenImage(getPublicUrl(sub.id_path))}
-                        />
-                      )}
-                      {sub.fullbody_path && (
-                        <img
-                          src={getPublicUrl(sub.fullbody_path)}
-                          alt="Full Body"
-                          width={100}
-                          style={{ cursor: "pointer", borderRadius: 4 }}
-                          onClick={() => setOpenImage(getPublicUrl(sub.fullbody_path))}
-                        />
+                      {sub.id_url && <img src={sub.id_url} alt="ID" width={100} />}
+                      {sub.fullbody_url && (
+                        <img src={sub.fullbody_url} alt="Full Body" width={100} />
                       )}
                     </Box>
 
@@ -135,11 +133,6 @@ const AdminVerificationPage = () => {
             ))}
           </Grid>
         )}
-
-        {/* Dialog to show clicked image */}
-        <Dialog open={!!openImage} onClose={() => setOpenImage(null)}>
-          {openImage && <img src={openImage} alt="Preview" style={{ width: "100%" }} />}
-        </Dialog>
       </Container>
     </Box>
   );
