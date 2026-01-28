@@ -6,9 +6,11 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [membership, setMembership] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Fetch profile
   const fetchProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
@@ -34,13 +36,43 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 🔹 Fetch membership (tier)
+  const fetchMembership = async (userId) => {
+    if (!userId) {
+      setMembership(null);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("memberships")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error; // ignore "no rows"
+
+      setMembership(data || null);
+    } catch (err) {
+      console.error("Error fetching membership:", err);
+      setMembership(null);
+    }
+  };
+
   useEffect(() => {
     const getInitialSession = async () => {
       const { data } = await supabase.auth.getSession();
       const currentUser = data?.session?.user ?? null;
 
       setUser(currentUser);
-      await fetchProfile(currentUser?.id);
+
+      if (currentUser) {
+        await Promise.all([
+          fetchProfile(currentUser.id),
+          fetchMembership(currentUser.id),
+        ]);
+      }
+
       setLoading(false);
     };
 
@@ -53,8 +85,10 @@ export const AuthProvider = ({ children }) => {
 
         if (currentUser) {
           fetchProfile(currentUser.id);
+          fetchMembership(currentUser.id);
         } else {
           setProfile(null);
+          setMembership(null);
           setRole(null);
         }
       }
@@ -66,7 +100,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profile, role, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        membership, // ✅ NEW
+        role,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

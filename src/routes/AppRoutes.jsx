@@ -10,6 +10,7 @@ import VerifyEmailPage from "../pages/Public/VerifyEmailPage"; // Add this impor
 import AuthCallback from "../pages/Public/AuthCallback";
 import VerifyPage from "../pages/Public/VerifyPage";
 import VerifyStatusPage from "../pages/Public/VerifyStatus";
+import TiersPage from "../pages/Public/TiersPage";
 import DashboardPage from "../pages/DashboardPage";
 import AdminDashboard from "../pages/AdminDashboard/";
 
@@ -45,6 +46,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <VerifyStatusPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/tiers"
+        element={
+          <ProtectedRoute>
+            <TiersPage />
           </ProtectedRoute>
         }
       />

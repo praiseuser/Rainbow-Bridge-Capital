@@ -43,7 +43,7 @@ const VerifyStatusPage = () => {
 
       // 🔥 AUTO REDIRECT WHEN APPROVED
       if (updated.status === "approved") {
-        navigate("/dashboard", { replace: true });
+        navigate("/tiers", { replace: true });
       }
     };
 
