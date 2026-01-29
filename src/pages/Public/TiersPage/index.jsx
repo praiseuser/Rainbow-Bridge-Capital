@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 const TiersPage = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false); // single loading for all buttons
+    const [loading, setLoading] = useState(false);
+    const [selectedTier, setSelectedTier] = useState(null);
 
     const tiers = [
         { id: 1, name: "Tier 1", benefits: "Basic features" },
@@ -16,29 +17,51 @@ const TiersPage = () => {
     ];
 
     const handleSelectTier = async (tierId) => {
-        if (!user) return toast.error("User not found");
+        if (!user) {
+            toast.error("User not found");
+            return;
+        }
 
         if (loading) return; // prevent multiple clicks
+
         setLoading(true);
+        setSelectedTier(tierId);
 
         try {
-            // Upsert ensures no duplicate key error
-            const { error } = await supabase
+            // Upsert the tier selection
+            const { data, error } = await supabase
                 .from("memberships")
                 .upsert(
-                    { user_id: user.id, tier: tierId, status: "active" },
+                    {
+                        user_id: user.id,
+                        tier: tierId,
+                        status: "active",
+                        updated_at: new Date().toISOString()
+                    },
                     { onConflict: "user_id" }
-                );
+                )
+                .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase error:", error);
+                throw error;
+            }
+
+            // Wait a bit to ensure the database has processed the update
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             toast.success(`Tier ${tierId} selected successfully!`);
-            navigate("/dashboard"); // ✅ navigate immediately
+
+            // Navigate after a small delay to ensure state is updated
+            setTimeout(() => {
+                navigate("/dashboard", { replace: true });
+            }, 100);
+
         } catch (err) {
             console.error("Error selecting tier:", err);
-            toast.error("Failed to select tier");
-        } finally {
+            toast.error("Failed to select tier. Please try again.");
             setLoading(false);
+            setSelectedTier(null);
         }
     };
 
@@ -50,26 +73,31 @@ const TiersPage = () => {
                     <div
                         key={tier.id}
                         style={{
-                            border: "1px solid #ccc",
+                            border: selectedTier === tier.id ? "2px solid #10b981" : "1px solid #ccc",
                             padding: "1rem",
                             borderRadius: "8px",
                             width: "200px",
                             textAlign: "center",
+                            backgroundColor: selectedTier === tier.id ? "#f0fdf4" : "white",
                         }}
                     >
                         <h3>{tier.name}</h3>
                         <p>{tier.benefits}</p>
                         <button
                             onClick={() => handleSelectTier(tier.id)}
-                            disabled={loading} // disable all buttons when loading
+                            disabled={loading}
                             style={{
                                 marginTop: "1rem",
                                 padding: "0.5rem 1rem",
                                 borderRadius: "5px",
                                 cursor: loading ? "not-allowed" : "pointer",
+                                backgroundColor: loading && selectedTier === tier.id ? "#94a3b8" : "#3B82F6",
+                                color: "white",
+                                border: "none",
+                                fontWeight: "600",
                             }}
                         >
-                            {loading ? "Selecting..." : "Select"}
+                            {loading && selectedTier === tier.id ? "Selecting..." : "Select"}
                         </button>
                     </div>
                 ))}
