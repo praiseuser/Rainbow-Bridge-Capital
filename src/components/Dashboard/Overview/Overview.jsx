@@ -47,7 +47,7 @@ const DashboardHome = () => {
             variant="contained"
             fullWidth
             sx={{ mt: 2 }}
-            onClick={() => navigate("/tiers/upgrade")}
+            onClick={() => navigate("/tiers-upgrade")}
           >
             Upgrade Tier
           </Button>
