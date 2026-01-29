@@ -4,10 +4,16 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MenuIcon from "@mui/icons-material/Menu";
 import VerifiedIcon from "@mui/icons-material/Verified";
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 
 const DashboardHeader = ({ toggleMobile }) => {
-  const { user } = useAuth();
+  const { user, membership } = useAuth();
+
+  const tierLabel = membership?.tier
+    ? `Tier ${membership.tier}`
+    : "No Tier";
+
+  const tierStatus = membership?.status || "none";
 
   return (
     <Box
@@ -41,7 +47,7 @@ const DashboardHeader = ({ toggleMobile }) => {
           <MenuIcon />
         </IconButton>
 
-        <Box sx={{ display: "flex", alignItems: "center", ml: { xs: 1, md: 2 } }}>
+        <Box sx={{ ml: { xs: 1, md: 2 } }}>
           <Typography
             variant="h6"
             sx={{
@@ -58,9 +64,19 @@ const DashboardHeader = ({ toggleMobile }) => {
               </Tooltip>
             )}
           </Typography>
+
+          {/* Tier Info */}
+          <Typography
+            variant="body2"
+            sx={{ color: "#9fb3ff", fontSize: "0.85rem" }}
+          >
+            {tierLabel}
+            {tierStatus !== "none" && ` • ${tierStatus}`}
+          </Typography>
         </Box>
       </Box>
 
+      {/* Right Section */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <IconButton sx={{ color: "#d0d7ff" }}>
           <NotificationsIcon />
