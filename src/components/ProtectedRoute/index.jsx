@@ -6,30 +6,23 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
   if (loading) return null;
+
   if (!user) return <Navigate to="/login" replace />;
 
-  // Allow verify pages
-  if (
-    location.pathname === "/verify" ||
-    location.pathname === "/verify/status"
-  ) {
+  // Allow access to verify pages without redirect loop
+  if (location.pathname === "/verify" || location.pathname === "/verify/status") {
     return children;
   }
 
-  // Verification logic
-  if (profile?.verification_status === "not_verified")
-    return <Navigate to="/verify" replace />;
-  if (profile?.verification_status === "pending")
-    return <Navigate to="/verify/status" replace />;
-  if (profile?.verification_status === "rejected")
-    return <Navigate to="/verify" replace />;
+  // Verification checks
+  if (profile?.verification_status === "not_verified") return <Navigate to="/verify" replace />;
+  if (profile?.verification_status === "pending") return <Navigate to="/verify/status" replace />;
+  if (profile?.verification_status === "rejected") return <Navigate to="/verify" replace />;
 
-  // ✅ VERIFIED but NO TIER
-  if (!membership && location.pathname !== "/tiers") {
-    return <Navigate to="/tiers" replace />;
-  }
+  // ✅ Tier check: if verified but no tier, redirect to /tiers
+  if (!membership || !membership.tier) return <Navigate to="/tiers" replace />;
 
-  return children;
+  return children; // user is verified and has a tier
 };
 
 export default ProtectedRoute;
