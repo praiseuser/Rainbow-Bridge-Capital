@@ -5,7 +5,7 @@ import supabase from "../../../supabase";
 import toast from "react-hot-toast";
 
 const TiersPage = () => {
-    const { user } = useAuth();
+    const { user, fetchMembership } = useAuth(); // Add fetchMembership
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [selectedTier, setSelectedTier] = useState(null);
@@ -22,19 +22,18 @@ const TiersPage = () => {
             return;
         }
 
-        if (loading) return; // prevent multiple clicks
+        if (loading) return;
 
         setLoading(true);
         setSelectedTier(tierId);
 
         try {
-            // Upsert the tier selection
             const { data, error } = await supabase
                 .from("memberships")
                 .upsert(
-                    {
-                        user_id: user.id,
-                        tier: tierId,
+                    { 
+                        user_id: user.id, 
+                        tier: tierId, 
                         status: "active",
                         updated_at: new Date().toISOString()
                     },
@@ -47,15 +46,13 @@ const TiersPage = () => {
                 throw error;
             }
 
-            // Wait a bit to ensure the database has processed the update
-            await new Promise(resolve => setTimeout(resolve, 500));
-
             toast.success(`Tier ${tierId} selected successfully!`);
-
-            // Navigate after a small delay to ensure state is updated
-            setTimeout(() => {
-                navigate("/dashboard", { replace: true });
-            }, 100);
+            
+            // ✅ FORCE REFRESH THE MEMBERSHIP IN CONTEXT
+            await fetchMembership(user.id);
+            
+            // Navigate with state to tell ProtectedRoute we're coming from tiers
+            navigate("/dashboard", { replace: true, state: { fromTiers: true } });
 
         } catch (err) {
             console.error("Error selecting tier:", err);

@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
         .eq("user_id", userId)
         .single();
 
-      if (error && error.code !== "PGRST116") throw error; // ignore "no rows"
+      if (error && error.code !== "PGRST116") throw error;
 
       setMembership(data || null);
     } catch (err) {
@@ -104,9 +104,11 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         profile,
-        membership, // ✅ NEW
+        membership,
         role,
         loading,
+        fetchMembership, // ✅ EXPOSE THIS
+        fetchProfile, // ✅ EXPOSE THIS TOO (might be useful)
       }}
     >
       {children}
