@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import supabase from "../../supabase";
+import { useAuth } from "../../../context/AuthContext";
+import supabase from "../../../supabase";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
