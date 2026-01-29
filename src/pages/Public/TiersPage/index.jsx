@@ -1,92 +1,90 @@
 import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import supabase from "../../supabase";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Typography, Button, Grid } from "@mui/material";
-import supabase from "../../../supabase";
-import { useAuth } from "../../../context/AuthContext";
 
 const tiers = [
-    {
-        tier: 1,
-        title: "Basic",
-        description: "Access to basic features",
-    },
-    {
-        tier: 2,
-        title: "Pro",
-        description: "More visibility and features",
-    },
-    {
-        tier: 3,
-        title: "Elite",
-        description: "Maximum exposure and priority",
-    },
+    { id: 1, name: "Tier 1", benefits: "Basic benefits" },
+    { id: 2, name: "Tier 2", benefits: "Standard benefits" },
+    { id: 3, name: "Tier 3", benefits: "Premium benefits" },
 ];
 
 const TierPage = () => {
-    const { user } = useAuth();
+    const { user, membership } = useAuth();
+    const [loadingTierId, setLoadingTierId] = useState(null);
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
 
-    const handleSelectTier = async (tier) => {
-        if (!user) return;
+    const handleSelectTier = async (tierId) => {
+        if (!user) return toast.error("User not found");
 
-        setLoading(true);
+        setLoadingTierId(tierId);
 
-        const { error } = await supabase
-            .from("memberships")
-            .update({
-                tier,
-                status: "active",
-            })
-            .eq("user_id", user.id);
+        try {
+            // ✅ Upsert membership row to avoid duplicate key error
+            const { error: upsertError } = await supabase
+                .from("memberships")
+                .upsert(
+                    {
+                        user_id: user.id,
+                        tier: tierId,
+                        status: "active",
+                    },
+                    { onConflict: "user_id" } // ensures update if row exists
+                );
 
-        setLoading(false);
+            if (upsertError) throw upsertError;
 
-        if (error) {
-            console.error("Tier selection error:", error);
-            alert("Failed to select tier");
-            return;
+            toast.success(`Tier ${tierId} selected successfully!`);
+            navigate("/dashboard"); // redirect to dashboard after selecting tier
+        } catch (err) {
+            console.error("Error selecting tier:", err);
+            toast.error("Failed to select tier");
+        } finally {
+            setLoadingTierId(null);
         }
-
-        navigate("/dashboard", { replace: true });
     };
 
     return (
-        <Box sx={{ minHeight: "100vh", background: "#0a1f44", p: 4 }}>
-            <Typography
-                variant="h4"
-                sx={{ color: "#fff", textAlign: "center", mb: 4 }}
-            >
-                Choose Your Membership Tier
-            </Typography>
+        <div style={{ maxWidth: "600px", margin: "auto", padding: "2rem" }}>
+            <h2>Select Your Tier</h2>
+            <p>Please select a tier to unlock your membership benefits.</p>
 
-            <Grid container spacing={3} justifyContent="center">
-                {tiers.map((item) => (
-                    <Grid item xs={12} md={4} key={item.tier}>
-                        <Card sx={{ backgroundColor: "#1f2a38", color: "#fff" }}>
-                            <CardContent>
-                                <Typography variant="h5" sx={{ mb: 1 }}>
-                                    {item.title}
-                                </Typography>
-
-                                <Typography sx={{ mb: 3, color: "#ccc" }}>
-                                    {item.description}
-                                </Typography>
-
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    disabled={loading}
-                                    onClick={() => handleSelectTier(item.tier)}
-                                >
-                                    Select Tier {item.tier}
-                                </Button>
-                            </CardContent>  
-                        </Card>
-                    </Grid>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1.5rem" }}>
+                {tiers.map((tier) => (
+                    <div
+                        key={tier.id}
+                        style={{
+                            border: "1px solid #ccc",
+                            padding: "1rem",
+                            borderRadius: "8px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
+                    >
+                        <div>
+                            <strong>{tier.name}</strong>
+                            <p>{tier.benefits}</p>
+                        </div>
+                        <button
+                            onClick={() => handleSelectTier(tier.id)}
+                            disabled={loadingTierId === tier.id}
+                            style={{
+                                padding: "0.5rem 1rem",
+                                borderRadius: "6px",
+                                backgroundColor: loadingTierId === tier.id ? "#ccc" : "#6366f1",
+                                color: "#fff",
+                                border: "none",
+                                cursor: loadingTierId === tier.id ? "not-allowed" : "pointer",
+                            }}
+                        >
+                            {loadingTierId === tier.id ? "Selecting..." : "Select"}
+                        </button>
+                    </div>
                 ))}
-            </Grid>
-        </Box>
+            </div>
+        </div>
     );
 };
 
