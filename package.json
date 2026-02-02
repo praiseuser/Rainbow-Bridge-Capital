@@ -24,6 +24,7 @@
     "react-hot-toast": "^2.6.0",
     "react-paystack": "^6.0.0",
     "react-router-dom": "^7.9.6",
+    "react-toastify": "^11.0.5",
     "recharts": "^3.4.1",
     "styled-components": "^6.1.19"
   },

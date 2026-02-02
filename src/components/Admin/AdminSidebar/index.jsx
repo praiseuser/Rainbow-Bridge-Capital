@@ -4,7 +4,12 @@ import { ShieldCheck } from "lucide-react";
 
 const sidebarWidth = 260;
 
-const AdminSidebar = ({ isMobileOpen, toggleMobile }) => {
+const AdminSidebar = ({
+    isMobileOpen,
+    toggleMobile,
+    activeSection,
+    setActiveSection,
+}) => {
     const SidebarContent = (
         <Box
             sx={{
@@ -27,22 +32,59 @@ const AdminSidebar = ({ isMobileOpen, toggleMobile }) => {
             </Typography>
 
             <List>
+                {/* Verification */}
                 <ListItemButton
+                    onClick={() => {
+                        setActiveSection("Verification");
+                        toggleMobile(false);
+                    }}
                     sx={{
                         display: "flex",
                         alignItems: "center",
                         gap: 2,
                         p: "12px 16px",
                         borderRadius: 2,
-                        background: "rgba(255,255,255,0.15)",
+                        background:
+                            activeSection === "Verification"
+                                ? "rgba(255,255,255,0.25)"
+                                : "rgba(255,255,255,0.15)",
                         "&:hover": {
-                            background: "rgba(255,255,255,0.2)",
+                            background: "rgba(255,255,255,0.3)",
                         },
                     }}
                 >
                     <ShieldCheck size={20} />
-                    <Typography sx={{ fontSize: "15px", whiteSpace: "nowrap" }}>
+                    <Typography sx={{ fontSize: "15px" }}>
                         Verification Review
+                    </Typography>
+                </ListItemButton>
+            </List>
+
+            <List>
+                {/* Tier Upgrade */}
+                <ListItemButton
+                    onClick={() => {
+                        setActiveSection("TierUpgrade");
+                        toggleMobile(false);
+                    }}
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        p: "12px 16px",
+                        borderRadius: 2,
+                        background:
+                            activeSection === "TierUpgrade"
+                                ? "rgba(255,255,255,0.25)"
+                                : "rgba(255,255,255,0.15)",
+                        "&:hover": {
+                            background: "rgba(255,255,255,0.3)",
+                        },
+                    }}
+                >
+                    <ShieldCheck size={20} />
+                    <Typography sx={{ fontSize: "15px" }}>
+                        Tier Upgrade Requests
                     </Typography>
                 </ListItemButton>
             </List>
