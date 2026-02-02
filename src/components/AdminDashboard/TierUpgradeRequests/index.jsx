@@ -1,76 +1,73 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Button,
+} from "@mui/material";
 import supabase from "../../../supabase";
 import toast from "react-hot-toast";
 
 const TierUpgradeRequests = () => {
   const [requests, setRequests] = useState([]);
 
-  // Fetch all pending requests
   const fetchRequests = async () => {
     const { data, error } = await supabase
       .from("tier_requests")
       .select("*")
       .eq("status", "pending");
+
     if (!error) setRequests(data);
   };
 
   useEffect(() => {
     fetchRequests();
-
-    // 🔹 Real-time subscription for any changes to tier_requests
-    const subscription = supabase
-      .from("tier_requests")
-      .on("*", (payload) => {
-        // Update table when a row changes
-        fetchRequests();
-
-        // Optional: notify admin
-        if (payload.eventType === "UPDATE") {
-          const { new: updated } = payload;
-          toast.success(`User ${updated.user_id} request updated to ${updated.status}`);
-        }
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeSubscription(subscription);
-    };
   }, []);
 
   const handleApprove = async (req) => {
     try {
-      const { error } = await supabase
+      // 1️⃣ Approve request
+      await supabase
         .from("tier_requests")
         .update({ status: "approved" })
         .eq("id", req.id);
-      if (error) throw error;
 
-      // Update user's membership immediately
-      const { error: membershipError } = await supabase
+      // 2️⃣ Update membership
+      await supabase
         .from("memberships")
-        .upsert({ user_id: req.user_id, tier: req.requested_tier, status: "active" }, { onConflict: "user_id" });
-      if (membershipError) throw membershipError;
+        .upsert(
+          {
+            user_id: req.user_id,
+            tier: req.requested_tier,
+            status: "active",
+          },
+          { onConflict: "user_id" }
+        );
 
-      toast.success(`Approved upgrade request for user ${req.user_id}`);
+      toast.success("Tier upgrade approved");
+      fetchRequests();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to approve request");
+      toast.error("Approval failed");
     }
   };
 
   const handleReject = async (req) => {
     try {
-      const { error } = await supabase
+      await supabase
         .from("tier_requests")
         .update({ status: "rejected" })
         .eq("id", req.id);
-      if (error) throw error;
 
-      toast.error(`Rejected upgrade request for user ${req.user_id}`);
+      toast.error("Request rejected");
+      fetchRequests();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to reject request");
+      toast.error("Reject failed");
     }
   };
 
@@ -97,10 +94,19 @@ const TierUpgradeRequests = () => {
               <TableCell>{req.current_tier}</TableCell>
               <TableCell>{req.requested_tier}</TableCell>
               <TableCell>
-                <Button variant="contained" color="success" sx={{ mr: 1 }} onClick={() => handleApprove(req)}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  sx={{ mr: 1 }}
+                  onClick={() => handleApprove(req)}
+                >
                   Approve
                 </Button>
-                <Button variant="outlined" color="error" onClick={() => handleReject(req)}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => handleReject(req)}
+                >
                   Reject
                 </Button>
               </TableCell>
