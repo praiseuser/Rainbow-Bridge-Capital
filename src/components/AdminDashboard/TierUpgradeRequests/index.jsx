@@ -1,153 +1,115 @@
 import React, { useEffect, useState } from "react";
-import {
-    Box,
-    Typography,
-    Table,
-    TableHead,
-    TableRow,
-    TableCell,
-    TableBody,
-    Button,
-} from "@mui/material";
-import { toast } from "react-toastify";
+import { Box, Typography, Table, TableHead, TableRow, TableCell, TableBody, Button } from "@mui/material";
 import supabase from "../../../supabase";
+import toast from "react-hot-toast";
 
 const TierUpgradeRequests = () => {
-    const [requests, setRequests] = useState([]);
-    const [loadingId, setLoadingId] = useState(null);
+  const [requests, setRequests] = useState([]);
 
-    const fetchRequests = async () => {
-        const { data, error } = await supabase
-            .from("tier_requests")
-            .select("*")
-            .eq("status", "pending")
-            .order("created_at", { ascending: false });
+  // Fetch all pending requests
+  const fetchRequests = async () => {
+    const { data, error } = await supabase
+      .from("tier_requests")
+      .select("*")
+      .eq("status", "pending");
+    if (!error) setRequests(data);
+  };
 
-        if (!error) setRequests(data);
-    };
+  useEffect(() => {
+    fetchRequests();
 
-    useEffect(() => {
+    // 🔹 Real-time subscription for any changes to tier_requests
+    const subscription = supabase
+      .from("tier_requests")
+      .on("*", (payload) => {
+        // Update table when a row changes
         fetchRequests();
 
-        // 🔴 REALTIME SUBSCRIPTION
-        const channel = supabase
-            .channel("tier-requests-realtime")
-            .on(
-                "postgres_changes",
-                { event: "*", schema: "public", table: "tier_requests" },
-                () => {
-                    fetchRequests();
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, []);
-
-    const handleApprove = async (req) => {
-        setLoadingId(req.id);
-
-        try {
-            const { error: requestError } = await supabase
-                .from("tier_requests")
-                .update({ status: "approved" })
-                .eq("id", req.id);
-
-            if (requestError) throw requestError;
-
-            const { error: userError } = await supabase
-                .from("users")
-                .update({ tier: req.requested_tier })
-                .eq("id", req.user_id);
-
-            if (userError) throw userError;
-
-            toast.success("Tier upgrade approved 🎉");
-        } catch (err) {
-            toast.error("Failed to approve request ❌");
-            console.error(err);
-        } finally {
-            setLoadingId(null);
+        // Optional: notify admin
+        if (payload.eventType === "UPDATE") {
+          const { new: updated } = payload;
+          toast.success(`User ${updated.user_id} request updated to ${updated.status}`);
         }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeSubscription(subscription);
     };
+  }, []);
 
-    const handleReject = async (id) => {
-        setLoadingId(id);
+  const handleApprove = async (req) => {
+    try {
+      const { error } = await supabase
+        .from("tier_requests")
+        .update({ status: "approved" })
+        .eq("id", req.id);
+      if (error) throw error;
 
-        try {
-            const { error } = await supabase
-                .from("tier_requests")
-                .update({ status: "rejected" })
-                .eq("id", id);
+      // Update user's membership immediately
+      const { error: membershipError } = await supabase
+        .from("memberships")
+        .upsert({ user_id: req.user_id, tier: req.requested_tier, status: "active" }, { onConflict: "user_id" });
+      if (membershipError) throw membershipError;
 
-            if (error) throw error;
+      toast.success(`Approved upgrade request for user ${req.user_id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to approve request");
+    }
+  };
 
-            toast.info("Tier request rejected");
-        } catch (err) {
-            toast.error("Failed to reject request ❌");
-            console.error(err);
-        } finally {
-            setLoadingId(null);
-        }
-    };
+  const handleReject = async (req) => {
+    try {
+      const { error } = await supabase
+        .from("tier_requests")
+        .update({ status: "rejected" })
+        .eq("id", req.id);
+      if (error) throw error;
 
-    return (
-        <Box p={3}>
-            <Typography variant="h5" fontWeight={600} mb={3}>
-                Tier Upgrade Requests
-            </Typography>
+      toast.error(`Rejected upgrade request for user ${req.user_id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to reject request");
+    }
+  };
 
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>User ID</TableCell>
-                        <TableCell>Current Tier</TableCell>
-                        <TableCell>Requested Tier</TableCell>
-                        <TableCell>Action</TableCell>
-                    </TableRow>
-                </TableHead>
+  return (
+    <Box p={3}>
+      <Typography variant="h5" fontWeight={600} mb={3}>
+        Tier Upgrade Requests
+      </Typography>
 
-                <TableBody>
-                    {requests.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={4} align="center">
-                                No pending requests
-                            </TableCell>
-                        </TableRow>
-                    )}
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell>User ID</TableCell>
+            <TableCell>Current Tier</TableCell>
+            <TableCell>Requested Tier</TableCell>
+            <TableCell>Action</TableCell>
+          </TableRow>
+        </TableHead>
 
-                    {requests.map((req) => (
-                        <TableRow key={req.id}>
-                            <TableCell>{req.user_id}</TableCell>
-                            <TableCell>{req.current_tier}</TableCell>
-                            <TableCell>{req.requested_tier}</TableCell>
-                            <TableCell>
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    sx={{ mr: 1 }}
-                                    disabled={loadingId === req.id}
-                                    onClick={() => handleApprove(req)}
-                                >
-                                    Approve
-                                </Button>
-                                <Button
-                                    variant="outlined"
-                                    color="error"
-                                    disabled={loadingId === req.id}
-                                    onClick={() => handleReject(req.id)}
-                                >
-                                    Reject
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </Box>
-    );
+        <TableBody>
+          {requests.map((req) => (
+            <TableRow key={req.id}>
+              <TableCell>{req.user_id}</TableCell>
+              <TableCell>{req.current_tier}</TableCell>
+              <TableCell>{req.requested_tier}</TableCell>
+              <TableCell>
+                <Button variant="contained" color="success" sx={{ mr: 1 }} onClick={() => handleApprove(req)}>
+                  Approve
+                </Button>
+                <Button variant="outlined" color="error" onClick={() => handleReject(req)}>
+                  Reject
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
 };
 
 export default TierUpgradeRequests;
