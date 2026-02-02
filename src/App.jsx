@@ -1,48 +1,32 @@
-import React, { useMemo, useState } from "react";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { useLocation } from "react-router-dom"; // ← NEW IMPORT
-import { useEffect } from "react"; // ← NEW IMPORT
-import toast from "react-hot-toast"; // ← NEW IMPORT
-import AppRoutes from "./routes/AppRoutes";
-import themeSettings from "./theme";
+import React, { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
+import { useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
+import AppRoutes from "./routes/AppRoutes";
 
 // Toast Cleaner Component – dismisses all toasts on route change
 const ToastCleaner = () => {
   const location = useLocation();
 
   useEffect(() => {
-    toast.dismiss(); // Kill all active toasts when route changes
-  }, [location.pathname]); // Triggers on every navigation
+    toast.dismiss(); // Dismiss all active toasts when route changes
+  }, [location.pathname]);
 
   return null;
 };
 
 const App = () => {
-  const [mode, setMode] = useState("dark");
-
-  const theme = useMemo(
-    () => createTheme(themeSettings(mode)),
-    [mode]
-  );
-
-  const toggleTheme = () =>
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
-
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      
+    <>
       {/* Clean up toasts on route change */}
       <ToastCleaner />
-      
+
       {/* Your routes */}
-      <AppRoutes toggleTheme={toggleTheme} />
+      <AppRoutes />
 
       {/* Toaster */}
       <Toaster position="top-right" />
-    </ThemeProvider>
+    </>
   );
 };
 

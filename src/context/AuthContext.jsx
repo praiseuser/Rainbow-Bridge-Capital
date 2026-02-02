@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
         .eq("user_id", userId)
         .single();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error && error.code !== "PGRST116") throw error; // ignore "no rows"
 
       setMembership(data || null);
     } catch (err) {
@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }) => {
         membership,
         role,
         loading,
-        fetchMembership, // ✅ EXPOSE THIS
-        fetchProfile, // ✅ EXPOSE THIS TOO (might be useful)
+        fetchMembership, // ✅ EXPOSED FOR REFRESH AFTER TIER UPGRADE
+        fetchProfile,    // ✅ Also exposed if needed
       }}
     >
       {children}

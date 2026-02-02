@@ -1,32 +1,91 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import supabase from "../../../supabase";
 import toast from "react-hot-toast";
 
 const TierUpgradePage = () => {
-    const { user, membership } = useAuth();
+    const { user, membership, refreshMembership } = useAuth();
+    const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
     const [hasPending, setHasPending] = useState(false);
+    const [requestId, setRequestId] = useState(null);
 
+    // 🔍 Check if user already has pending request
     useEffect(() => {
+        if (!user) return;
+
         const checkPendingRequest = async () => {
             const { data, error } = await supabase
                 .from("tier_requests")
-                .select("id")
+                .select("*")
                 .eq("user_id", user.id)
                 .eq("status", "pending")
                 .maybeSingle();
 
-            if (!error && data) setHasPending(true);
+            if (!error && data) {
+                setHasPending(true);
+                setRequestId(data.id);
+            }
         };
 
-        if (user) checkPendingRequest();
+        checkPendingRequest();
     }, [user]);
+
+    // 🔴 REALTIME LISTENER FOR ADMIN ACTION
+    useEffect(() => {
+        if (!user) return;
+
+        const channel = supabase
+            .channel("tier-request-status")
+            .on(
+                "postgres_changes",
+                {
+                    event: "UPDATE",
+                    schema: "public",
+                    table: "tier_requests",
+                    filter: `user_id=eq.${user.id}`,
+                },
+                async (payload) => {
+                    const status = payload.new.status;
+
+                    if (status === "approved") {
+                        toast.success("🎉 Tier upgrade approved!");
+
+                        // refresh membership from DB
+                        await refreshMembership();
+
+                        // redirect after short delay
+                        setTimeout(() => {
+                            navigate("/dashboard");
+                        }, 1500);
+                    }
+
+                    if (status === "rejected") {
+                        toast.error("❌ Tier upgrade rejected");
+                        setHasPending(false);
+                        setRequestId(null);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user, navigate, refreshMembership]);
 
     if (!membership) return <p>Loading your current tier...</p>;
 
-    if (hasPending)
-        return <p>Your upgrade request is pending admin approval.</p>;
+    if (hasPending) {
+        return (
+            <div style={{ padding: "2rem" }}>
+                <h2>⏳ Upgrade Pending</h2>
+                <p>Your upgrade request is pending admin approval.</p>
+            </div>
+        );
+    }
 
     const availableTiers = [2, 3, 4, 5].filter(
         (tier) => tier > membership.tier
@@ -40,17 +99,22 @@ const TierUpgradePage = () => {
         setLoading(true);
 
         try {
-            const { error } = await supabase.from("tier_requests").insert({
-                user_id: user.id,
-                current_tier: membership.tier,
-                requested_tier: tierId,
-                status: "pending",
-            });
+            const { data, error } = await supabase
+                .from("tier_requests")
+                .insert({
+                    user_id: user.id,
+                    current_tier: membership.tier,
+                    requested_tier: tierId,
+                    status: "pending",
+                })
+                .select()
+                .single();
 
             if (error) throw error;
 
             toast.success(`Upgrade request to Tier ${tierId} submitted`);
             setHasPending(true);
+            setRequestId(data.id);
         } catch (err) {
             console.error(err);
             toast.error("Failed to submit upgrade request");

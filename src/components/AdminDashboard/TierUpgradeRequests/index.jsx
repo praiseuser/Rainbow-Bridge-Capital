@@ -9,6 +9,7 @@ import {
     TableBody,
     Button,
 } from "@mui/material";
+import { toast } from "react-toastify";
 import supabase from "../../../supabase";
 
 const TierUpgradeRequests = () => {
@@ -22,23 +23,33 @@ const TierUpgradeRequests = () => {
             .eq("status", "pending")
             .order("created_at", { ascending: false });
 
-        if (!error) {
-            setRequests(data);
-        } else {
-            console.error(error);
-        }
+        if (!error) setRequests(data);
     };
 
     useEffect(() => {
         fetchRequests();
+
+        // 🔴 REALTIME SUBSCRIPTION
+        const channel = supabase
+            .channel("tier-requests-realtime")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "tier_requests" },
+                () => {
+                    fetchRequests();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
-    // ✅ APPROVE HANDLER
     const handleApprove = async (req) => {
         setLoadingId(req.id);
 
         try {
-            // 1️⃣ Update tier request status
             const { error: requestError } = await supabase
                 .from("tier_requests")
                 .update({ status: "approved" })
@@ -46,7 +57,6 @@ const TierUpgradeRequests = () => {
 
             if (requestError) throw requestError;
 
-            // 2️⃣ Update user's tier
             const { error: userError } = await supabase
                 .from("users")
                 .update({ tier: req.requested_tier })
@@ -54,16 +64,15 @@ const TierUpgradeRequests = () => {
 
             if (userError) throw userError;
 
-            // 3️⃣ Refresh table
-            fetchRequests();
+            toast.success("Tier upgrade approved 🎉");
         } catch (err) {
-            console.error("Approve failed:", err.message);
+            toast.error("Failed to approve request ❌");
+            console.error(err);
         } finally {
             setLoadingId(null);
         }
     };
 
-    // ❌ REJECT HANDLER
     const handleReject = async (id) => {
         setLoadingId(id);
 
@@ -75,9 +84,10 @@ const TierUpgradeRequests = () => {
 
             if (error) throw error;
 
-            fetchRequests();
+            toast.info("Tier request rejected");
         } catch (err) {
-            console.error("Reject failed:", err.message);
+            toast.error("Failed to reject request ❌");
+            console.error(err);
         } finally {
             setLoadingId(null);
         }
@@ -123,7 +133,6 @@ const TierUpgradeRequests = () => {
                                 >
                                     Approve
                                 </Button>
-
                                 <Button
                                     variant="outlined"
                                     color="error"
