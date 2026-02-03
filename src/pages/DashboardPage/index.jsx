@@ -19,16 +19,13 @@ const DashboardPage = () => {
 
   useEffect(() => {
     if (loading) return;
-
-    if (!user) {
-      navigate("/login", { replace: true });
-    }
+    if (!user) navigate("/login", { replace: true });
   }, [user, loading, navigate]);
 
   const renderSection = () => {
     switch (activeSection) {
       case "Overview":
-        return <Overview />;
+        return <Overview setActiveSection={setActiveSection} />;
       case "ActivateManager":
         return <ActivateManager />;
       case "Notifications":
@@ -38,7 +35,7 @@ const DashboardPage = () => {
       case "Community":
         return <CommunityVerification />;
       default:
-        return <Overview />;
+        return <Overview setActiveSection={setActiveSection} />;
     }
   };
 

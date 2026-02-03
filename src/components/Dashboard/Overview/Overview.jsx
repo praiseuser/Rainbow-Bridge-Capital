@@ -1,11 +1,9 @@
 import React from "react";
 import { Box, Typography, Button, Card, CardContent } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 
-const DashboardHome = () => {
+const DashboardHome = ({ setActiveSection }) => {
   const { membership } = useAuth();
-  const navigate = useNavigate();
 
   const tierLabel = membership?.tier
     ? `Tier ${membership.tier}`
@@ -34,9 +32,7 @@ const DashboardHome = () => {
           </Typography>
 
           {membership?.status === "active" && (
-            <Typography sx={{ color: "green", mb: 2 }}>
-              Status: Active
-            </Typography>
+            <Typography sx={{ color: "green", mb: 2 }}>Status: Active</Typography>
           )}
 
           {membership?.status === "pending" && (
@@ -44,22 +40,13 @@ const DashboardHome = () => {
               Upgrade Pending Approval
             </Typography>
           )}
-
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={() => navigate("/tiers-upgrade")}
-          >
-            Upgrade Tier
-          </Button>
         </CardContent>
       </Card>
 
-      {/* Activate Manager button ALWAYS visible */}
+      {/* Activate Manager button triggers the section, no route */}
       <Button
         variant="outlined"
-        onClick={() => navigate("/activate-manager")}
+        onClick={() => setActiveSection("ActivateManager")}
         sx={{ mt: 1 }}
       >
         Activate Manager Account
