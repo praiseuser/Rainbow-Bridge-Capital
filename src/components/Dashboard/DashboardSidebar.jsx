@@ -8,7 +8,7 @@ import SupportIcon from "@mui/icons-material/Support";
 const sections = [
   { name: "Overview", icon: <DashboardIcon /> },
   { name: "Community", icon: <PeopleIcon /> },
-  { name: "Profile", icon: <PeopleIcon /> },
+  { name: "Activate Manager", icon: <PeopleIcon /> },
   { name: "Notifications", icon: <NotificationsIcon /> },
   { name: "Support", icon: <SupportIcon /> },
 ];
