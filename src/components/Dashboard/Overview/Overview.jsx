@@ -53,6 +53,15 @@ const DashboardHome = () => {
           </Button>
         </CardContent>
       </Card>
+      {membership?.tier >= 3 && (
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/activate-manager")}
+        >
+          Activate Manager Account
+        </Button>
+      )}
+
     </Box>
   );
 };

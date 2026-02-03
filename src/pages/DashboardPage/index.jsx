@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import DashboardHeader from "../../components/Dashboard/DashboardHeader";
 import DashboardSidebar from "../../components/Dashboard/DashboardSidebar";
 import Overview from "../../components/Dashboard/Overview/Overview";
-import ProfilePage from "../../components/Dashboard/ProfilePage";
+import ActivateManager from "../../components/Dashboard/ActivateManager";
 import NotificationsPage from "../../components/Dashboard/Notifications";
 import SupportPage from "../../components/Dashboard/Support";
 import CommunityVerification from "../../components/Dashboard/CommunityVerification";
@@ -29,8 +29,8 @@ const DashboardPage = () => {
     switch (activeSection) {
       case "Overview":
         return <Overview />;
-      case "Profile":
-        return <ProfilePage />;
+      case "Activate Manager":
+        return <ActivateManager />;
       case "Notifications":
         return <NotificationsPage />;
       case "Support":
