@@ -16,9 +16,11 @@ const DashboardHome = () => {
       sx={{
         minHeight: "60vh",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         px: 2,
+        gap: 2,
       }}
     >
       <Card sx={{ maxWidth: 420, width: "100%" }}>
@@ -53,15 +55,21 @@ const DashboardHome = () => {
           </Button>
         </CardContent>
       </Card>
-      {membership?.tier >= 3 && (
-        <Button
-          variant="outlined"
-          onClick={() => navigate("/activate-manager")}
-        >
-          Activate Manager Account
-        </Button>
-      )}
 
+      {/* Activate Manager button ALWAYS visible */}
+      <Button
+        variant="outlined"
+        onClick={() => navigate("/activate-manager")}
+        sx={{ mt: 1 }}
+      >
+        Activate Manager Account
+      </Button>
+
+      {membership?.tier < 3 && (
+        <Typography sx={{ color: "red", mt: 1, fontSize: "0.9rem" }}>
+          *Manager activation requires Tier 3 or higher
+        </Typography>
+      )}
     </Box>
   );
 };

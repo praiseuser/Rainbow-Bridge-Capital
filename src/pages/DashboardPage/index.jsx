@@ -29,7 +29,7 @@ const DashboardPage = () => {
     switch (activeSection) {
       case "Overview":
         return <Overview />;
-      case "Activate Manager":
+      case "ActivateManager":
         return <ActivateManager />;
       case "Notifications":
         return <NotificationsPage />;
